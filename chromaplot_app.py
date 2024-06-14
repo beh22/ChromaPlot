@@ -11,6 +11,7 @@ Bugs to fix:
 - Unticking add legend doesn't remove legend
 - Fix plotting for more than 2 curves
 - Remove y-axis limits field
+- Adding fractions when legend is on removes legend
 
 Potential features to add/change:
 - Checkboxes for different curves instead of dropdown menu
@@ -276,6 +277,16 @@ class AktaPlotApp:
         self.root.title("Chromatography Data Plotter")
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        window_width = 380
+        window_height = 400
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+
+        position_top = int(screen_height/3 - window_height/2)
+        position_right = int(screen_width/4 - window_width/2)
+
+        root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
 
         self.filename = ''
         self.data = None
