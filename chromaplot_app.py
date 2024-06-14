@@ -278,15 +278,15 @@ class AktaPlotApp:
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        window_width = 380
-        window_height = 400
-        screen_width = root.winfo_screenwidth()
-        screen_height = root.winfo_screenheight()
+        # window_width = 380
+        # window_height = 400
+        # screen_width = root.winfo_screenwidth()
+        # screen_height = root.winfo_screenheight()
 
-        position_top = int(screen_height/3 - window_height/2)
-        position_right = int(screen_width/4 - window_width/2)
+        # position_top = int(screen_height/3 - window_height/2)
+        # position_right = int(screen_width/4 - window_width/2)
 
-        root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+        # root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
 
         self.filename = ''
         self.data = None
