@@ -305,6 +305,9 @@ class chromData:
         self.fig.tight_layout()
         plt.show()
 
+    def savePlot(self, outname):
+        plt.savefig(outname)
+
 class AktaPlotApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -330,6 +333,9 @@ class AktaPlotApp(tk.Tk):
 
         self.load_button = ttk.Button(self.main_frame, text="Load Data", command=self.load_data)
         self.load_button.grid(row=0, column=0, padx=5, pady=5)
+
+        self.save_button = ttk.Button(self.main_frame, text="Save Plot", command=self.save_plot)
+        self.save_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
 
         self.checkboxes_frame = ttk.Frame(self.main_frame)
         self.checkboxes_frame.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NW)
@@ -474,6 +480,15 @@ class AktaPlotApp(tk.Tk):
 
     def clear_shaded_fractions(self):
         self.chrom_data.clearShadedFractions()
+
+    def save_plot(self):
+        file_path = filedialog.asksaveasfilename(defaultextension=".pdf",
+                                                 filetypes=[("PDF files", "*.pdf"),
+                                                            ("PNG files", "*.png"),
+                                                            ("All files", "*.*")])
+        if file_path:
+            self.chrom_data.savePlot(file_path)
+            messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
 
     def on_closing(self):
         # Ensure script stops running when window is closed
