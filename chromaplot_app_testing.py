@@ -317,6 +317,7 @@ class AktaPlotApp(tk.Tk):
 
         self.chrom_data = None
         self.curve_vars = []
+
         self.add_fraction_labels_var = tk.BooleanVar(value=False)
         self.add_legend_var = tk.BooleanVar(value=False)
         self.shade_fractions_var = tk.BooleanVar(value=False)
@@ -368,14 +369,19 @@ class AktaPlotApp(tk.Tk):
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+        # self.update_idletasks()
+
     def create_checkboxes(self):
+        self.row = 2
+
         for widget in self.checkboxes_frame.winfo_children():
             widget.destroy()
 
         self.curve_vars = []
         
-        ttk.Label(self.checkboxes_frame, text="Curves", font=('TkDefaultFont', 14, 'bold')).grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
-        
+        ttk.Label(self.checkboxes_frame, text="Curves", font=('TkDefaultFont', 14, 'bold')).grid(row=self.row, column=0, padx=5, pady=5, sticky=tk.W)
+        self.row += 1
+
         for curve in self.chrom_data.curves:
             if curve != 'UV':  # Skip the UV curve
                 var = tk.BooleanVar(value=False)
@@ -387,14 +393,19 @@ class AktaPlotApp(tk.Tk):
 
         if self.row > 1:
             ttk.Label(self.checkboxes_frame, text="Options", font=('TkDefaultFont', 14, 'bold')).grid(row=self.row, column=0, padx=5, pady=5, sticky=tk.W)
+            self.row += 1
+
             self.add_fraction_labels_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Add Fraction Labels", variable=self.add_fraction_labels_var, command=self.update_plot)
-            self.add_fraction_labels_checkbox.grid(row=self.row+1, column=0, padx=5, pady=2, sticky=tk.W)
+            self.add_fraction_labels_checkbox.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             self.add_legend_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Add Legend", variable=self.add_legend_var, command=self.update_plot)
-            self.add_legend_checkbox.grid(row=self.row+2, column=0, padx=5, pady=2, sticky=tk.W)
+            self.add_legend_checkbox.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             self.add_shade_fractions_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Shade Fractions", variable=self.shade_fractions_var, command=self.toggle_shade_fractions)
-            self.add_shade_fractions_checkbox.grid(row=self.row+3, column=0, padx=5, pady=2, sticky=tk.W)
+            self.add_shade_fractions_checkbox.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             self.toggle_shade_fractions()
 
@@ -418,20 +429,25 @@ class AktaPlotApp(tk.Tk):
                 self.chrom_data.removeLegend()
 
         self.chrom_data.fig.canvas.draw()
+        # self.update_idletasks()
 
     def toggle_shade_fractions(self):
         if self.shade_fractions_var.get():
             self.start_fraction_label = ttk.Label(self.checkboxes_frame, text="Start Fraction:")
-            self.start_fraction_label.grid(row=self.row+4, column=0, padx=5, pady=2, sticky=tk.W)
+            self.start_fraction_label.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             self.start_fraction_entry = ttk.Entry(self.checkboxes_frame, textvariable=self.start_fraction_var)
-            self.start_fraction_entry.grid(row=self.row+5, column=0, padx=5, pady=2, sticky=tk.W)
+            self.start_fraction_entry.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             self.stop_fraction_label = ttk.Label(self.checkboxes_frame, text="Stop Fraction:")
-            self.stop_fraction_label.grid(row=self.row+6, column=0, padx=5, pady=2, sticky=tk.W)
+            self.stop_fraction_label.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             self.stop_fraction_entry = ttk.Entry(self.checkboxes_frame, textvariable=self.stop_fraction_var)
-            self.stop_fraction_entry.grid(row=self.row+7, column=0, padx=5, pady=2, sticky=tk.W)
+            self.stop_fraction_entry.grid(row=self.row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.row += 1
 
             button_frame = ttk.Frame(self.checkboxes_frame)
             button_frame.grid(row=self.row+8, column=0, columnspan=2, padx=5, pady=2, sticky=tk.W)
@@ -494,11 +510,10 @@ class AktaPlotApp(tk.Tk):
         # Ensure script stops running when window is closed
         self.quit()
         self.destroy()
+        # if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        #     self.quit()
+        #     self.destroy()
 
-    # def on_closing(self):
-    #     if messagebox.askokcancel("Quit", "Do you want to quit?"):
-    #         self.quit()
-    #         self.destroy()
 
 if __name__ == "__main__":
     app = AktaPlotApp()
