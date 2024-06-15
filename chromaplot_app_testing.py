@@ -94,6 +94,8 @@ class chromData:
         self.ax3 = None
         self.colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         self.curve_colors = {curve: self.colors[i % len(self.colors)] for i, curve in enumerate(self.curves)}
+        self.fraction_labels = []
+        self.legend_added = False
 
     # def listCurves(self):
     #     print(self.curves)
@@ -210,9 +212,62 @@ class chromData:
 
     #     self.fig.canvas.draw()
 
+    def addFractions(self, stript = True, fontsize=6, labheight=5):
+        flabx = []
+        try:
+            f = self.data['Fraction']['ml']
+            flab = self.data['Fraction']['Fraction']
+        except:
+            raise KeyError('Fraction data does not seem to be present')
+        for i in range(len(flab) - 1):
+            flabx.append((f[i] + f[i+1])/2)
+        if stript == True: 
+            flab = [x.strip("T\"") for x in flab]
+        else:
+            pass
+        for i in range(len(f)):
+            line = self.ax1.axvline( x = f[i], ymin = 0,  ymax = 0.05, color = 'red', ls = ':' )
+            self.fraction_labels.append(line)
+        for i in range(len(flabx)):
+            label = self.ax1.text(flabx[i], labheight, flab[i], fontsize = fontsize, ha = 'center')
+            self.fraction_labels.append(label)
+
+    def removeFractions(self):
+        for label in self.fraction_labels:
+            label.remove()
+        self.fraction_labels = []
+
+    def addLegend(self):
+        handles_labels = [ax.get_legend_handles_labels() for ax in self.fig.get_axes()]
+        handles, labels = zip(*handles_labels)
+        handles = [item for sublist in handles for item in sublist]
+        labels = [item for sublist in labels for item in sublist]
+        
+        unique_labels = []
+        unique_handles = []
+        seen_labels = set()
+
+        for handle, label in zip(handles, labels):
+            if label not in seen_labels:
+                unique_handles.append(handle)
+                unique_labels.append(label)
+                seen_labels.add(label)
+
+        self.ax1.legend(loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8,
+                        handles=unique_handles, labels=unique_labels)
+        self.legend_added = True
+
+    def removeLegend(self):
+        if self.legend_added:
+            self.ax1.legend_.remove()
+            self.legend_added = False
+
+
     def showPlot(self):
         self.fig.tight_layout()
         plt.show()
+
+    
 
 class AktaPlotApp(tk.Tk):
     def __init__(self):
@@ -252,6 +307,7 @@ class AktaPlotApp(tk.Tk):
             self.chrom_data = chromData(data)
             self.plot_initial_curve()
             self.create_checkboxes()
+            print(f"Loaded data from {file_path}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -300,18 +356,18 @@ class AktaPlotApp(tk.Tk):
                 self.chrom_data.removeCurve(curve)
         
         if self.add_fraction_labels_var.get():
-            self.add_fraction_labels()
+            self.chrom_data.addFractions()
+        else:
+            self.chrom_data.removeFractions()
 
         if self.add_legend_var.get():
-            self.add_legend()
+            if not self.chrom_data.legend_added:
+                self.chrom_data.addLegend()
+        else:
+            if self.chrom_data.legend_added:
+                self.chrom_data.removeLegend()
 
         self.chrom_data.fig.canvas.draw()
-
-    def add_fraction_labels(self):
-        pass
-
-    def add_legend(self):
-        pass
 
     def on_closing(self):
         # Ensure script stops running when window is closed
