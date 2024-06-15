@@ -96,6 +96,7 @@ class chromData:
         self.curve_colors = {curve: self.colors[i % len(self.colors)] for i, curve in enumerate(self.curves)}
         self.fraction_labels = []
         self.legend_added = False
+        self.shaded_regions = []
 
     # def listCurves(self):
     #     print(self.curves)
@@ -262,12 +263,47 @@ class chromData:
             self.ax1.legend_.remove()
             self.legend_added = False
 
+    def removeShadedFractions(self):
+        for patch in self.shaded_regions:
+            patch.remove()
+        self.shaded_regions = []
+
+    def clearShadedFractions(self):
+        self.removeShadedFractions()
+        self.fig.canvas.draw()
+
+    def shadeFractions(self, startFrac, stopFrac, color='gray', alpha=0.5):
+        try:
+            fractions = self.data['Fraction']['Fraction']
+            volumes = self.data['Fraction']['ml']
+        except KeyError:
+            raise KeyError('Fraction data does not seem to be present')
+
+        fractions = [int(x.strip("T\"")) for x in fractions if x.strip("T\"").isdigit()]
+
+        if startFrac not in fractions or stopFrac not in fractions:
+            raise ValueError('Specified fractions are not in the data')
+
+        startIndex = fractions.index(startFrac)
+        stopIndex = fractions.index(stopFrac)
+
+        startVol = volumes[startIndex]
+        stopVol = volumes[stopIndex]
+
+        # self.removeShadedFractions()
+
+        for ax in self.fig.get_axes():
+            if ax is self.ax1:
+                xdata, ydata = self.ax1.lines[0].get_data()
+                mask = (xdata >= startVol) & (xdata <= stopVol)
+                patch = ax.fill_between(xdata[mask], ydata[mask], color=color, alpha=alpha)
+                self.shaded_regions.append(patch)
+
+        self.fig.canvas.draw()
 
     def showPlot(self):
         self.fig.tight_layout()
         plt.show()
-
-    
 
 class AktaPlotApp(tk.Tk):
     def __init__(self):
@@ -280,6 +316,11 @@ class AktaPlotApp(tk.Tk):
         self.curve_vars = []
         self.add_fraction_labels_var = tk.BooleanVar(value=False)
         self.add_legend_var = tk.BooleanVar(value=False)
+        self.shade_fractions_var = tk.BooleanVar(value=False)
+        self.start_fraction_var = tk.StringVar(value="")
+        self.stop_fraction_var = tk.StringVar(value="")
+
+        self.row = 1
 
         self.create_widgets()
 
@@ -329,24 +370,27 @@ class AktaPlotApp(tk.Tk):
         
         ttk.Label(self.checkboxes_frame, text="Curves", font=('TkDefaultFont', 14, 'bold')).grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
         
-        row = 1
         for curve in self.chrom_data.curves:
             if curve != 'UV':  # Skip the UV curve
                 var = tk.BooleanVar(value=False)
                 var.trace_add('write', self.update_plot)
                 chk = ttk.Checkbutton(self.checkboxes_frame, text=curve, variable=var)
-                chk.grid(row=row, column=0, sticky=tk.W, padx=5, pady=2)
+                chk.grid(row=self.row, column=0, sticky=tk.W, padx=5, pady=2)
                 self.curve_vars.append((curve, var))
-                row += 1
+                self.row += 1
 
-        if row > 1:
-            ttk.Label(self.checkboxes_frame, text="Options", font=('TkDefaultFont', 14, 'bold')).grid(row=row, column=0, padx=5, pady=5, sticky=tk.W)
-            row += 1
+        if self.row > 1:
+            ttk.Label(self.checkboxes_frame, text="Options", font=('TkDefaultFont', 14, 'bold')).grid(row=self.row, column=0, padx=5, pady=5, sticky=tk.W)
             self.add_fraction_labels_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Add Fraction Labels", variable=self.add_fraction_labels_var, command=self.update_plot)
-            self.add_fraction_labels_checkbox.grid(row=row, column=0, padx=5, pady=2, sticky=tk.W)
+            self.add_fraction_labels_checkbox.grid(row=self.row+1, column=0, padx=5, pady=2, sticky=tk.W)
 
             self.add_legend_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Add Legend", variable=self.add_legend_var, command=self.update_plot)
-            self.add_legend_checkbox.grid(row=row+1, column=0, padx=5, pady=2, sticky=tk.W)
+            self.add_legend_checkbox.grid(row=self.row+2, column=0, padx=5, pady=2, sticky=tk.W)
+
+            self.add_shade_fractions_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Shade Fractions", variable=self.shade_fractions_var, command=self.toggle_shade_fractions)
+            self.add_shade_fractions_checkbox.grid(row=self.row+3, column=0, padx=5, pady=2, sticky=tk.W)
+
+            self.toggle_shade_fractions()
 
     def update_plot(self, *args):
         for curve, var in self.curve_vars:
@@ -369,10 +413,77 @@ class AktaPlotApp(tk.Tk):
 
         self.chrom_data.fig.canvas.draw()
 
+    def toggle_shade_fractions(self):
+        if self.shade_fractions_var.get():
+            self.start_fraction_label = ttk.Label(self.checkboxes_frame, text="Start Fraction:")
+            self.start_fraction_label.grid(row=self.row+4, column=0, padx=5, pady=2, sticky=tk.W)
+
+            self.start_fraction_entry = ttk.Entry(self.checkboxes_frame, textvariable=self.start_fraction_var)
+            self.start_fraction_entry.grid(row=self.row+5, column=0, padx=5, pady=2, sticky=tk.W)
+
+            self.stop_fraction_label = ttk.Label(self.checkboxes_frame, text="Stop Fraction:")
+            self.stop_fraction_label.grid(row=self.row+6, column=0, padx=5, pady=2, sticky=tk.W)
+
+            self.stop_fraction_entry = ttk.Entry(self.checkboxes_frame, textvariable=self.stop_fraction_var)
+            self.stop_fraction_entry.grid(row=self.row+7, column=0, padx=5, pady=2, sticky=tk.W)
+
+            button_frame = ttk.Frame(self.checkboxes_frame)
+            button_frame.grid(row=self.row+8, column=0, columnspan=2, padx=5, pady=2, sticky=tk.W)
+
+            self.shade_button = ttk.Button(button_frame, text="Shade", command=self.shade_fractions)
+            self.shade_button.grid(row=0, column=0, padx=(0, 5), pady=2, sticky=tk.W)
+
+            self.clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_shaded_fractions)
+            self.clear_button.grid(row=0, column=1, padx=(5, 0), pady=2, sticky=tk.W)
+
+        else:
+            if hasattr(self, 'start_fraction_label'):
+                self.start_fraction_label.grid_remove()
+            if hasattr(self, 'start_fraction_entry'):
+                self.start_fraction_entry.grid_remove()
+            if hasattr(self, 'stop_fraction_label'):
+                self.stop_fraction_label.grid_remove()
+            if hasattr(self, 'stop_fraction_entry'):
+                self.stop_fraction_entry.grid_remove()
+            if hasattr(self, 'shade_button'):
+                self.shade_button.grid_remove()
+            if hasattr(self, 'clear_button'):
+                self.clear_button.grid_remove()
+
+    def shade_fractions(self):
+        start_fraction = self.start_fraction_var.get().strip()
+        stop_fraction = self.stop_fraction_var.get().strip()
+
+        if not start_fraction or not stop_fraction:
+            messagebox.showerror("Error", "Start and stop fractions must be specified")
+            return
+
+        try:
+            start_fraction = int(start_fraction)
+            stop_fraction = int(stop_fraction)
+        except ValueError:
+            messagebox.showerror("Error", "Fractions must be numeric")
+            return
+
+        if start_fraction >= stop_fraction:
+            messagebox.showerror("Error", "Start fraction must be less than stop fraction")
+            return
+
+        self.chrom_data.shadeFractions(start_fraction, stop_fraction)
+        self.chrom_data.fig.canvas.draw()
+
+    def clear_shaded_fractions(self):
+        self.chrom_data.clearShadedFractions()
+
     def on_closing(self):
         # Ensure script stops running when window is closed
         self.quit()
         self.destroy()
+
+    # def on_closing(self):
+    #     if messagebox.askokcancel("Quit", "Do you want to quit?"):
+    #         self.quit()
+    #         self.destroy()
 
 if __name__ == "__main__":
     app = AktaPlotApp()
