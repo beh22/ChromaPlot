@@ -211,7 +211,7 @@ class chromData:
     #     self.fig.canvas.draw()
 
     def showPlot(self):
-        # self.fig.tight_layout()
+        self.fig.tight_layout()
         plt.show()
 
 class AktaPlotApp(tk.Tk):
@@ -223,6 +223,8 @@ class AktaPlotApp(tk.Tk):
 
         self.chrom_data = None
         self.curve_vars = []
+        self.add_fraction_labels_var = tk.BooleanVar(value=False)
+        self.add_legend_var = tk.BooleanVar(value=False)
 
         self.create_widgets()
 
@@ -268,13 +270,27 @@ class AktaPlotApp(tk.Tk):
             widget.destroy()
 
         self.curve_vars = []
+        
+        ttk.Label(self.checkboxes_frame, text="Curves", font=('TkDefaultFont', 14, 'bold')).grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        
+        row = 1
         for curve in self.chrom_data.curves:
             if curve != 'UV':  # Skip the UV curve
                 var = tk.BooleanVar(value=False)
                 var.trace_add('write', self.update_plot)
                 chk = ttk.Checkbutton(self.checkboxes_frame, text=curve, variable=var)
-                chk.pack(anchor=tk.W, padx=5, pady=2)
+                chk.grid(row=row, column=0, sticky=tk.W, padx=5, pady=2)
                 self.curve_vars.append((curve, var))
+                row += 1
+
+        if row > 1:
+            ttk.Label(self.checkboxes_frame, text="Options", font=('TkDefaultFont', 14, 'bold')).grid(row=row, column=0, padx=5, pady=5, sticky=tk.W)
+            row += 1
+            self.add_fraction_labels_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Add Fraction Labels", variable=self.add_fraction_labels_var, command=self.update_plot)
+            self.add_fraction_labels_checkbox.grid(row=row, column=0, padx=5, pady=2, sticky=tk.W)
+
+            self.add_legend_checkbox = ttk.Checkbutton(self.checkboxes_frame, text="Add Legend", variable=self.add_legend_var, command=self.update_plot)
+            self.add_legend_checkbox.grid(row=row+1, column=0, padx=5, pady=2, sticky=tk.W)
 
     def update_plot(self, *args):
         for curve, var in self.curve_vars:
@@ -282,7 +298,20 @@ class AktaPlotApp(tk.Tk):
                 self.chrom_data.addCurve(curve)
             else:
                 self.chrom_data.removeCurve(curve)
+        
+        if self.add_fraction_labels_var.get():
+            self.add_fraction_labels()
+
+        if self.add_legend_var.get():
+            self.add_legend()
+
         self.chrom_data.fig.canvas.draw()
+
+    def add_fraction_labels(self):
+        pass
+
+    def add_legend(self):
+        pass
 
     def on_closing(self):
         # Ensure script stops running when window is closed
