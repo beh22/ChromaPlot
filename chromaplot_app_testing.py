@@ -6,7 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.ticker import AutoMinorLocator
 
 class AKdatafile:
-    def __init__ (self, datafilename, encoding=None):
+    def __init__ (self, datafilename):
         self.datafilename = datafilename
         self.datalines = []
         self.colnoerror = []
@@ -14,11 +14,11 @@ class AKdatafile:
         self.cc = None
         self.ce = None
         
-        if encoding:
-            with open(datafilename, 'r', encoding=encoding) as d:
-                self.datalines = d.readlines()
-        else:
+        try:
             with open(datafilename, 'r') as d:
+                self.datalines = d.readlines()
+        except:
+            with open(datafilename, 'r', encoding='UTF-16') as d:
                 self.datalines = d.readlines()
 
     def readline (self, inline): 
