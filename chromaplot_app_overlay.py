@@ -220,16 +220,26 @@ class chromData:
             flab = self.data['Fraction']['Fraction']
         except:
             raise KeyError('Fraction data does not seem to be present')
+        
         for i in range(len(flab) - 1):
             flabx.append((f[i] + f[i+1])/2)
+
         if stript == True: 
             flab = [x.strip("T\"") for x in flab]
         else:
             pass
+
         for i in range(len(f)):
+            if flab[i] == "Waste":
+                continue
+
             line = self.ax1.axvline( x = f[i], ymin = 0,  ymax = 0.05, color = 'red', ls = ':' )
             self.fraction_labels.append(line)
+
         for i in range(len(flabx)):
+            if flab[i] == "Waste":
+                continue
+
             label = self.ax1.text(flabx[i], labheight, flab[i], fontsize = fontsize, ha = 'center')
             self.fraction_labels.append(label)
 
@@ -344,10 +354,11 @@ class AktaPlotApp(tk.Tk):
         # self.deiconify()
 
     def switch_to_overlay_mode(self):
-        pass
-        # self.destroy()
-        # app = overlayMode()
-        # app.mainloop()
+        self.destroy()
+        self.quit()
+        app = overlayMode()
+        app.mainloop()
+        self.quit()
     
 
     def on_closing(self):
@@ -603,22 +614,31 @@ class overlayMode(tk.Tk):
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
-        self.load_button = ttk.Button(self.main_frame, text="Load Data", command=self.load_data)
-        self.load_button.grid(row=0, column=0, padx=5, pady=5)
+        head_frame = ttk.Frame(self.main_frame)
+        head_frame.grid(row=0, column=0, columnspan=2, padx=5, pady=2, sticky=tk.W)
+
+        self.load_button = ttk.Button(head_frame, text="Load Data", command=self.load_data)
+        self.load_button.grid(row=0, column=0, padx=(0, 5), pady=2, sticky=tk.W)
+
+        self.clear_data_button = ttk.Button(head_frame, text="Clear Data", command=self.clear_old_data)
+        self.clear_data_button.grid(row=0, column=1, padx=(5, 0), pady=2, sticky=tk.W)
 
         self.save_button = ttk.Button(self.main_frame, text="Save Plot", command=self.save_plot)
-        self.save_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+        self.save_button.grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
 
         self.checkboxes_frame = ttk.Frame(self.main_frame)
         self.checkboxes_frame.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NW)
 
         self.plot_frame = ttk.Frame(self.main_frame)
-        self.plot_frame.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NE)
+        self.plot_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NE)
 
     def load_data():
         pass
 
     def save_plot():
+        pass
+
+    def clear_old_data():
         pass
 
 
