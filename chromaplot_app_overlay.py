@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import ttk, messagebox, filedialog, simpledialog
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -84,24 +84,33 @@ class AKdatafile:
         self.ce = all(self.colnoerror)
         return odict
 
+colors = ['k', 'r', 'g', 'b', 'c', 'm']
 class chromData:
-    def __init__(self, datadic, figsize=(7, 3.5)):
+    def __init__(self, datadic, label, figsize=(7, 3.5), color='k'):
         self.data = datadic
         self.curves = datadic.keys()
         self.fig, self.ax1 = plt.subplots(1, 1, figsize=figsize)
         self.counter = 1
+
+        self.fig = None
+        self.ax1 = None
         self.ax2 = None
         self.ax3 = None
+
         self.colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         self.curve_colors = {curve: self.colors[i % len(self.colors)] for i, curve in enumerate(self.curves)}
+
         self.fraction_labels = []
         self.legend_added = False
         self.shaded_regions = []
 
+        self.overlay_colors = {'UV': color}
+        self.label = label
+
     # def listCurves(self):
     #     print(self.curves)
     
-    def plotCurve (self, curve, color='k', lw=1, ylabel=None):
+    def plotCurve(self, curve, color='k', lw=1, ylabel=None):
         curvekeys = list(self.data[curve].keys())
         xunits = curvekeys[0]
         yunits = curvekeys[1]
@@ -121,6 +130,30 @@ class chromData:
         # if ylabel:
         #     self.ax1.set_ylabel(ylabel, color=color, fontsize=10)
         self.ax1.set_ylabel('Absorbance (mAU)', color=color, fontsize=10)
+
+    def overlayCurves(self, curves, ax):
+        max_y = 0
+        for curve in curves:
+            curvekeys = list(self.data[curve].keys())
+            xunits = curvekeys[0]
+            yunits = curvekeys[1]
+            x = np.array(self.data[curve][xunits])
+            y = np.array(self.data[curve][yunits])
+
+            color = self.overlay_colors[curve] if curve in self.overlay_colors else 'k'
+            ax.plot(x, y, color=color, label=self.label)
+
+            max_y = max(max_y, max(y))
+
+        ax.set_xlim(left=0, right=max(x))
+        ax.set_ylim(bottom=0, top=max_y * 1.03)
+        ax.set_xlabel('Volume (mL)')
+        ax.set_ylabel('Absorbance (mAU)')
+        ax.tick_params(axis='both', labelsize=8)
+        ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+        ax.legend()
+
+        return ax 
 
     def addCurve(self, curve, color=None, lw=1, ylabel=True):
         curvekeys = list(self.data[curve].keys())
@@ -172,46 +205,46 @@ class chromData:
                         ax.yaxis.set_ticklabels([])
                         self.fig.delaxes(ax)
         self.fig.canvas.draw()
+        #
+        # 
+        #  for ax in self.fig.get_axes():
+        #      for line in ax.get_lines():
+        #          if line.get_label() == curve:
+        #              line.remove()  # Remove the line associated with the curve
+        #              if ax is self.ax2:
+        #                  self.ax2 = None
+        #                  ax.cla()
+        #                  ax.set_ylabel('')
+        #                  ax.yaxis.set_ticks([])
+        #                  ax.yaxis.set_ticklabels([])
+        #                  self.fig.delaxes(ax)
 
-    # def removeCurve(self, curve):
-    #     for ax in self.fig.get_axes():
-    #         for line in ax.get_lines():
-    #             if line.get_label() == curve:
-    #                 line.remove()  # Remove the line associated with the curve
-    #                 if ax is self.ax2:
-    #                     self.ax2 = None
-    #                     ax.cla()
-    #                     ax.set_ylabel('')
-    #                     ax.yaxis.set_ticks([])
-    #                     ax.yaxis.set_ticklabels([])
-    #                     self.fig.delaxes(ax)
+        #                  # Find the next available axis and set it as ax2
+        #                  for next_ax in self.fig.get_axes():
+        #                      if next_ax is not self.ax1:
+        #                          self.ax2 = next_ax
+        #                          break
 
-    #                     # Find the next available axis and set it as ax2
-    #                     for next_ax in self.fig.get_axes():
-    #                         if next_ax is not self.ax1:
-    #                             self.ax2 = next_ax
-    #                             break
+        #                  # If there is still an ax2 (after reassignment), adjust its position
+        #                  if self.ax2:
+        #                      self.ax2.spines['right'].set_position(('outward', 40 * (self.counter - 1)))
 
-    #                     # If there is still an ax2 (after reassignment), adjust its position
-    #                     if self.ax2:
-    #                         self.ax2.spines['right'].set_position(('outward', 40 * (self.counter - 1)))
+        #                  # Remove the ax3 if it exists
+        #                  for ax3 in self.fig.get_axes():
+        #                      if ax3 is not self.ax1 and ax3 is not self.ax2:
+        #                          ax3.cla()
+        #                          ax3.set_ylabel('')
+        #                          ax3.yaxis.set_ticks([])
+        #                          ax3.yaxis.set_ticklabels([])
+        #                          self.fig.delaxes(ax3)
+        #              elif ax is not self.ax1:
+        #                  ax.cla()  
+        #                  ax.set_ylabel('')  
+        #                  ax.yaxis.set_ticks([]) 
+        #                  ax.yaxis.set_ticklabels([]) 
+        #                  self.fig.delaxes(ax) 
 
-    #                     # Remove the ax3 if it exists
-    #                     for ax3 in self.fig.get_axes():
-    #                         if ax3 is not self.ax1 and ax3 is not self.ax2:
-    #                             ax3.cla()
-    #                             ax3.set_ylabel('')
-    #                             ax3.yaxis.set_ticks([])
-    #                             ax3.yaxis.set_ticklabels([])
-    #                             self.fig.delaxes(ax3)
-    #                 elif ax is not self.ax1:
-    #                     ax.cla()  
-    #                     ax.set_ylabel('')  
-    #                     ax.yaxis.set_ticks([]) 
-    #                     ax.yaxis.set_ticklabels([]) 
-    #                     self.fig.delaxes(ax) 
-
-    #     self.fig.canvas.draw()
+        #  self.fig.canvas.draw()
 
     def addFractions(self, stript = True, fontsize=6, labheight=5):
         flabx = []
@@ -589,7 +622,6 @@ class singleMode(tk.Tk):
                 self.chrom_data.savePlot(file_path)
                 messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
 
-
     def on_closing(self):
         # Ensure script stops running when window is closed
         self.quit()
@@ -598,15 +630,15 @@ class singleMode(tk.Tk):
         #     self.quit()
         #     self.destroy()
 
-
-
-
 class overlayMode(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("AKTA Plotting App - Overlay Mode")
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        self.chrom_data_list = []
+        self.curve_vars = []
 
         self.create_widgets()
 
@@ -630,27 +662,99 @@ class overlayMode(tk.Tk):
         self.checkboxes_frame.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NW)
 
         self.plot_frame = ttk.Frame(self.main_frame)
-        self.plot_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NE)
+        self.plot_frame.grid(row=1, column=1, columnspan=2, padx=5, pady=5, sticky=tk.NE)
 
-    def load_data():
-        pass
+    def load_data(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("ASCII files", "*.asc"), ("All files", "*.*")])
+        if not file_path:
+            return
+        
+        label = simpledialog.askstring("Input", "Enter label for the dataset:")
+        if not label:
+            return
 
-    def save_plot():
-        pass
+        try:
+            datafile = AKdatafile(file_path)
+            data = datafile.genAKdict(1, 2)
 
-    def clear_old_data():
-        pass
+            color = colors[len(self.chrom_data_list) % len(colors)]
 
+            chrom_data = chromData(data, label, color=color)
+            self.chrom_data_list.append(chrom_data)
+            self.create_checkboxes()
+            self.update_plot()                  # Is this needed?
+            print(f"Loaded data from {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def update_plot(self):
+        for widget in self.plot_frame.winfo_children():
+            widget.destroy()
+
+        checked_datasets = [cd for cd, var in self.curve_vars if var.get()]
+
+        if not checked_datasets:
+            return
+
+        fig, ax = plt.subplots(figsize=(7, 3.5), dpi=100)
+
+        max_y_overall = 0
+
+        for chrom_data in checked_datasets:
+            chrom_data.overlayCurves(['UV'], ax=ax)
+            max_y_overall = max(max_y_overall, ax.get_ylim()[1])
+
+        ax.set_xlabel('Volume (mL)')
+        ax.set_ylabel('Absorbance (mAU)', fontsize=10)
+        ax.set_ylim(bottom=0, top=max_y_overall * 1.03)
+        ax.legend()
+        fig.tight_layout()
+
+        canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)       
+
+    def create_checkboxes(self):
+        for widget in self.checkboxes_frame.winfo_children():
+            widget.destroy()
+
+        ttk.Label(self.checkboxes_frame, text="Datasets", font=('TkDefaultFont', 14, 'bold')).grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+
+        for i, chrom_data in enumerate(self.chrom_data_list):
+            if i >= len(self.curve_vars):
+                var = tk.BooleanVar(value=False)
+                self.curve_vars.append((chrom_data, var))
+            else:
+                _, var = self.curve_vars[i]
+
+            chk = ttk.Checkbutton(self.checkboxes_frame, text=chrom_data.label, variable=var, command=self.update_plot)
+            chk.grid(row=i + 1, column=0, sticky=tk.W, padx=5, pady=2)    
+     
+    def clear_old_data(self):
+        for widget in self.plot_frame.winfo_children():
+            widget.destroy()
+
+        self.chrom_data_list = []
+        self.curve_vars = []
+
+        for widget in self.checkboxes_frame.winfo_children():
+            widget.destroy()
+
+    def save_plot(self):
+        file_path = filedialog.asksaveasfilename(defaultextension=".pdf",
+                                                 filetypes=[("PDF files", "*.pdf"),
+                                                            ("PNG files", "*.png"),
+                                                            ("All files", "*.*")])
+        if file_path:
+            self.plot_frame.fig.savefig(file_path)
+            messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
 
     def on_closing(self):
-        # Ensure script stops running when window is closed
         self.quit()
         self.destroy()
-        # if messagebox.askokcancel("Quit", "Do you want to quit?"):
-        #     self.quit()
-        #     self.destroy()  
 
 
 if __name__ == "__main__":
     app = AktaPlotApp()
+    # app = overlayMode()
     app.mainloop()
