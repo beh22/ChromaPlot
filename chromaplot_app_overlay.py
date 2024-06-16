@@ -382,17 +382,23 @@ class singleMode(tk.Tk):
         self.main_frame = ttk.Frame(self)
         self.main_frame.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
-        self.load_button = ttk.Button(self.main_frame, text="Load Data", command=self.load_data)
-        self.load_button.grid(row=0, column=0, padx=5, pady=5)
+        head_frame = ttk.Frame(self.main_frame)
+        head_frame.grid(row=0, column=0, columnspan=2, padx=5, pady=2, sticky=tk.W)
+
+        self.load_button = ttk.Button(head_frame, text="Load Data", command=self.load_data)
+        self.load_button.grid(row=0, column=0, padx=(0, 5), pady=2, sticky=tk.W)
+
+        self.clear_data_button = ttk.Button(head_frame, text="Clear Data", command=self.clear_old_data)
+        self.clear_data_button.grid(row=0, column=1, padx=(5, 0), pady=2, sticky=tk.W)
 
         self.save_button = ttk.Button(self.main_frame, text="Save Plot", command=self.save_plot)
-        self.save_button.grid(row=0, column=1, padx=5, pady=5, sticky=tk.W)
+        self.save_button.grid(row=0, column=2, padx=5, pady=5, sticky=tk.W)
 
         self.checkboxes_frame = ttk.Frame(self.main_frame)
         self.checkboxes_frame.grid(row=1, column=0, padx=5, pady=5, sticky=tk.NW)
 
         self.plot_frame = ttk.Frame(self.main_frame)
-        self.plot_frame.grid(row=1, column=1, padx=5, pady=5, sticky=tk.NE)
+        self.plot_frame.grid(row=1, column=2, padx=5, pady=5, sticky=tk.NE)
 
     def load_data(self):
         file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"),("ASCII files", "*.asc"), ("All files", "*.*")])
@@ -560,13 +566,17 @@ class singleMode(tk.Tk):
         self.chrom_data.clearShadedFractions()
 
     def save_plot(self):
-        file_path = filedialog.asksaveasfilename(defaultextension=".pdf",
-                                                 filetypes=[("PDF files", "*.pdf"),
-                                                            ("PNG files", "*.png"),
-                                                            ("All files", "*.*")])
-        if file_path:
-            self.chrom_data.savePlot(file_path)
-            messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
+
+        if self.chrom_data == None:
+            messagebox.showerror("Error", "No data loaded")
+        else:
+            file_path = filedialog.asksaveasfilename(defaultextension=".pdf",
+                                                     filetypes=[("PDF files", "*.pdf"),
+                                                                ("PNG files", "*.png"),
+                                                                ("All files", "*.*")])
+            if file_path:
+                self.chrom_data.savePlot(file_path)
+                messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
 
 
     def on_closing(self):
@@ -576,9 +586,6 @@ class singleMode(tk.Tk):
         # if messagebox.askokcancel("Quit", "Do you want to quit?"):
         #     self.quit()
         #     self.destroy()
-
-
-
 
 
 
@@ -613,7 +620,6 @@ class overlayMode(tk.Tk):
 
     def save_plot():
         pass
-
 
 
     def on_closing(self):
