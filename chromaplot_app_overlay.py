@@ -133,6 +133,7 @@ class chromData:
 
     def overlayCurves(self, curves, ax):
         max_y = 0
+        max_x = 0
         for curve in curves:
             curvekeys = list(self.data[curve].keys())
             xunits = curvekeys[0]
@@ -144,9 +145,10 @@ class chromData:
             ax.plot(x, y, color=color, label=self.label)
 
             max_y = max(max_y, max(y))
+            max_x = max(max_x, max(x))
 
-        ax.set_xlim(left=0, right=max(x))
-        ax.set_ylim(bottom=0, top=max_y * 1.03)
+        ax.set_xlim(left=0, right=max_x)
+        ax.set_ylim(top=max_y * 1.03)
         ax.set_xlabel('Volume (mL)')
         ax.set_ylabel('Absorbance (mAU)')
         ax.tick_params(axis='both', labelsize=8)
@@ -700,14 +702,17 @@ class overlayMode(tk.Tk):
         self.figure, ax = plt.subplots(figsize=(7, 3.5), dpi=100)
 
         max_y_overall = 0
+        max_x_overall = 0
 
         for chrom_data in checked_datasets:
             chrom_data.overlayCurves(['UV'], ax=ax)
             max_y_overall = max(max_y_overall, ax.get_ylim()[1])
+            max_x_overall = max(max_x_overall, ax.get_xlim()[1])
 
         ax.set_xlabel('Volume (mL)')
         ax.set_ylabel('Absorbance (mAU)', fontsize=10)
-        ax.set_ylim(bottom=0, top=max_y_overall * 1.03)
+        ax.set_ylim(top=max_y_overall * 1.03)
+        ax.set_xlim(right=max_x_overall)
         ax.legend()
         self.figure.tight_layout()
 
