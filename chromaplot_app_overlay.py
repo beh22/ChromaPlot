@@ -86,14 +86,14 @@ class AKdatafile:
 
 colors = ['k', 'r', 'g', 'b', 'c', 'm']
 class chromData:
-    def __init__(self, datadic, label, figsize=(7, 3.5), color='k'):
+    def __init__(self, datadic, label=None, figsize=(7, 3.5), color='k'):
         self.data = datadic
         self.curves = datadic.keys()
         self.fig, self.ax1 = plt.subplots(1, 1, figsize=figsize)
         self.counter = 1
 
-        self.fig = None
-        self.ax1 = None
+        # self.fig = None
+        # self.ax1 = None
         self.ax2 = None
         self.ax3 = None
 
@@ -395,7 +395,6 @@ class AktaPlotApp(tk.Tk):
         app.mainloop()
         self.quit()
     
-
     def on_closing(self):
         # Ensure script stops running when window is closed
         self.quit()
