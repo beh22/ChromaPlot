@@ -639,6 +639,7 @@ class overlayMode(tk.Tk):
 
         self.chrom_data_list = []
         self.curve_vars = []
+        self.figure = None
 
         self.create_widgets()
 
@@ -696,7 +697,7 @@ class overlayMode(tk.Tk):
         if not checked_datasets:
             return
 
-        fig, ax = plt.subplots(figsize=(7, 3.5), dpi=100)
+        self.figure, ax = plt.subplots(figsize=(7, 3.5), dpi=100)
 
         max_y_overall = 0
 
@@ -708,9 +709,9 @@ class overlayMode(tk.Tk):
         ax.set_ylabel('Absorbance (mAU)', fontsize=10)
         ax.set_ylim(bottom=0, top=max_y_overall * 1.03)
         ax.legend()
-        fig.tight_layout()
+        self.figure.tight_layout()
 
-        canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
+        canvas = FigureCanvasTkAgg(self.figure, master=self.plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)       
 
@@ -741,13 +742,19 @@ class overlayMode(tk.Tk):
             widget.destroy()
 
     def save_plot(self):
-        file_path = filedialog.asksaveasfilename(defaultextension=".pdf",
+        if self.figure == None:
+            messagebox.showerror("Error", "No data loaded")
+        else:
+            file_path = filedialog.asksaveasfilename(defaultextension=".pdf",
                                                  filetypes=[("PDF files", "*.pdf"),
                                                             ("PNG files", "*.png"),
                                                             ("All files", "*.*")])
-        if file_path:
-            self.plot_frame.fig.savefig(file_path)
-            messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
+            if file_path:
+                if self.figure:
+                    self.figure.savefig(file_path)
+                    messagebox.showinfo("Save Plot", f"Plot saved successfully at {file_path}")
+                else:
+                    messagebox.showerror("Error", "No plot to save")
 
     def on_closing(self):
         self.quit()
