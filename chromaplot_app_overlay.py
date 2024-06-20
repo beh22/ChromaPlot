@@ -21,6 +21,9 @@ class AKdatafile:
             with open(datafilename, 'r', encoding='UTF-16') as d:
                 self.datalines = d.readlines()
 
+    '''Base function, splits each line by tab delimiters and removes \n 
+    characters, generates a list word which is used by other functions to parse
+    the data file'''
     def readline (self, inline): 
         word = inline.split('\t')
         colno = len(word)
@@ -32,6 +35,8 @@ class AKdatafile:
             word[i] = word[i].rstrip()
         return word, colno, colnoerror
 
+    '''Initiates outer dictionary using column headings for the from the 
+    extracted line'''
     def initodict (self, inlist, colno, colnoerror):
         odictkeys = []
         for i in range(colno)[::2]:
@@ -40,6 +45,8 @@ class AKdatafile:
             odict = dict(zip(odictkeys, values))
         return odictkeys, odict, colno, colnoerror
 
+    '''Initiates inner dictionaries with empty lists, list keys are taken
+    from column headins for extracted line'''
     def initidict (self, inlist, colno, colnoerror, indictkeys, indict, icols=2):
         for i in range(colno)[::2]:
             keys = [inlist[i], inlist[i+1]]
@@ -47,6 +54,10 @@ class AKdatafile:
             indict[indictkeys[int(i/2)]] = dict(zip(keys, values))
         return colno, colnoerror
 
+    '''This fills in the initated lists and ignores blank values, note this 
+    code block has issues running properly if UTF16 file format is used 
+    directly not sure why. This will also use try and except to convert all
+    numerical data into floats, hence faciliate plotting with numpy later'''
     def popcurves(self, inlist, colno, colnoerror, indictkeys, indict):
         for i in range(colno)[::2]:
             if inlist[i] == '' and inlist[i+1] == '':
@@ -69,6 +80,10 @@ class AKdatafile:
                     indict[entry][curvekeys[1]].append(value2)
         return colno, colnoerror
 
+    '''This puts all the code together two argumnets h1 and h2 are taken which
+    specifiy the lines with the column headings that form the keys for the 
+    dictionary structures, checks in place to make sure that a) column numbers
+    in data are even and b) all lines contain the same number of columns'''
     def genAKdict (self, h1, h2):
         curvelist, odict, cc, ce = self.initodict(*self.readline(self.datalines[h1]))
         self.colnoerror.append(ce)
