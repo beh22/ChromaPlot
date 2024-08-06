@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.ticker import AutoMinorLocator
 
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['font.sans-serif'] = "Arial"
+plt.rcParams['font.family'] = "sans-serif"
 class AKdatafile:
     def __init__ (self, datafilename):
         self.datafilename = datafilename
