@@ -15,7 +15,7 @@ class AKdatafile:
         self.ce = None
         
         try:
-            with open(datafilename, 'r') as d:
+            with open(datafilename, 'r', encoding='UTF-8') as d:
                 self.datalines = d.readlines()
         except:
             with open(datafilename, 'r', encoding='UTF-16') as d:
