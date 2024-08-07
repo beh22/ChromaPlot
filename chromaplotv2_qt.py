@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.ticker import AutoMinorLocator
 
+# from rich.traceback import install
+# install()
+
 '''
 To do:
 
@@ -52,6 +55,27 @@ class OptionsDialog(QDialog):
         }
 
 
+class AnalyseDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Analyse")
+
+        # Create layout
+        self.layout = QVBoxLayout()
+
+        self.layout.addWidget(QLabel("Analyse"))
+        self.layout.addWidget(QLabel("Functionality yet to be added"))
+
+        # Add buttons
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        self.layout.addWidget(self.button_box)
+
+        # Set the layout
+        self.setLayout(self.layout)
+
+
 class SingleMode(QDialog):
     def __init__(self, mode_name, parent=None):
         super().__init__(parent)
@@ -67,7 +91,6 @@ class SingleMode(QDialog):
         self.button_layout = QHBoxLayout()
         self.side_layout = QHBoxLayout()
         self.checkbox_layout = QVBoxLayout()
-        # self.option_checkbox_layout = QVBoxLayout()
 
         # Create buttons
         self.load_data_button = QPushButton("Load data")
@@ -75,21 +98,19 @@ class SingleMode(QDialog):
         self.save_plot_button = QPushButton("Save plot")
         self.back_button = QPushButton("Back")
         self.options_button = QPushButton("Options")
+        self.analyse_button = QPushButton("Analyse")
 
         # Add buttons to the button layout
         self.button_layout.addWidget(self.load_data_button)
         self.button_layout.addWidget(self.clear_data_button)
         self.button_layout.addWidget(self.save_plot_button)
-        self.button_layout.addWidget(self.back_button)
         self.button_layout.addWidget(self.options_button)
+        self.button_layout.addWidget(self.analyse_button)
+        self.button_layout.addWidget(self.back_button)
 
         # Create a matplotlib figure and canvas
-        self.figure = plt.figure()
+        self.figure = plt.figure(figsize=(14,7))
         self.canvas = FigureCanvas(self.figure)
-
-        # Arrange layouts for checkboxes
-        # self.checkbox_layout.addLayout(self.option_checkbox_layout)
-        # self.checkbox_layout.addLayout(self.curves_checkbox_layout)
 
         # Add the canvas and checkbox layout to the side layout
         self.side_layout.addLayout(self.checkbox_layout)
@@ -106,8 +127,9 @@ class SingleMode(QDialog):
         self.load_data_button.clicked.connect(self.load_data)
         self.clear_data_button.clicked.connect(self.clear_data)
         self.save_plot_button.clicked.connect(self.save_plot)
-        self.back_button.clicked.connect(self.close_dialog)
         self.options_button.clicked.connect(self.open_options_dialog)
+        self.analyse_button.clicked.connect(self.open_analyse_dialog)
+        self.back_button.clicked.connect(self.close_dialog)
 
     def load_data(self):
         if self.loaded_file:
@@ -122,7 +144,7 @@ class SingleMode(QDialog):
         options |= QFileDialog.ReadOnly
         file_name, _ = QFileDialog.getOpenFileName(
             self, "Load Data File", "", 
-            "Text Files (*.txt);;CSV Files (*.csv);;ASC Files (*.asc);;All Files (*)", 
+            "Text Files (*.txt);;ASC Files (*.asc);;CSV Files (*.csv);;All Files (*)", 
             options=options
         )
         if file_name:
@@ -141,6 +163,7 @@ class SingleMode(QDialog):
 
         # Create new checkboxes for the curves
         self.checkboxes = {}
+        self.checkbox_layout.addWidget(QLabel("Curves"))
         for curve in self.data.keys():
             if curve != 'UV':  # Exclude 'UV' since it's already plotted
                 checkbox = QCheckBox(curve)
@@ -191,9 +214,28 @@ class SingleMode(QDialog):
 
         ax.set_xlabel('Volume (mL)')
         ax.set_ylabel('UV (mAU)')
+
+        print(y_axes)
+
+        # handles_labels = [ax.get_legend_handles_labels() for ax in self.figure.get_axes()]
+        # handles, labels = zip(*handles_labels)
+        # handles = [item for sublist in handles for item in sublist]
+        # labels = [item for sublist in labels for item in sublist]
+        
+        # unique_labels = []
+        # unique_handles = []
+        # seen_labels = set()
+
+        # for handle, label in zip(handles, labels):
+        #     if label not in seen_labels:
+        #         unique_handles.append(handle)
+        #         unique_labels.append(label)
+        #         seen_labels.add(label)
         ax.legend(
-            loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8
+            loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8,
+            # labels=labels
         )
+        # ax.legend()
         plt.tight_layout()
 
         self.canvas.draw()
@@ -233,14 +275,18 @@ class SingleMode(QDialog):
 
     def close_dialog(self):
         self.close()
-        self.parent().show()
+        # self.parent().show()
 
     def open_options_dialog(self):
         options_dialog = OptionsDialog(self)
-        options_dialog.show()
-        # if options_dialog.exec_() == QDialog.Accepted:
-        #     options = options_dialog.get_options()
-        #     print("Selected options:", options)
+        # options_dialog.show()
+        if options_dialog.exec_() == QDialog.Accepted:
+            options = options_dialog.get_options()
+            print("Selected options:", options)
+
+    def open_analyse_dialog(self):
+        analyse_dialog = AnalyseDialog(self)
+        analyse_dialog.show()
 
 class OverlayMode(QDialog):
     pass
@@ -274,7 +320,7 @@ class MainWindow(QMainWindow):
     def single_mode(self):
         self.mode_dialog = SingleMode(self)
         self.hide()
-        self.mode_dialog.exec_()
+        self.mode_dialog.show()
 
     def overlay_mode(self):
         self.mode_dialog = OverlayMode(self)
