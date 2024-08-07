@@ -179,6 +179,9 @@ class SingleMode(QDialog):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
 
+        handles = []
+        labels = []
+
         # Always plot UV
         if 'UV' in self.data:
             curve = 'UV'
@@ -187,10 +190,13 @@ class SingleMode(QDialog):
             yunits = curvekeys[1]
             x = np.array(self.data[curve][xunits])
             y = np.array(self.data[curve][yunits])
-            ax.plot(x, y, label='UV', color='k')
+            uv_line, = ax.plot(x, y, label='UV', color='k')
+            handles.append(uv_line)
+            labels.append('UV')
 
         # Plot selected curves
         y_axes = [ax]
+
         for i, (curve, checkbox) in enumerate(self.checkboxes.items()):
             if checkbox.isChecked() and curve in self.data:
                 color = self.colors[i % len(self.colors)]
@@ -208,34 +214,20 @@ class SingleMode(QDialog):
                     new_ax.spines['right'].set_position(('outward', 40 * len(y_axes)))
                     y_axes.append(new_ax)
 
-                new_ax.plot(x,y, label=curve, color=color)
+                line, = new_ax.plot(x,y, label=curve, color=color)
                 new_ax.set_ylabel(curve, color=color)
                 new_ax.tick_params(axis='y', labelcolor=color)
+
+                handles.append(line)
+                labels.append(curve)
 
         ax.set_xlabel('Volume (mL)')
         ax.set_ylabel('UV (mAU)')
 
-        print(y_axes)
-
-        # handles_labels = [ax.get_legend_handles_labels() for ax in self.figure.get_axes()]
-        # handles, labels = zip(*handles_labels)
-        # handles = [item for sublist in handles for item in sublist]
-        # labels = [item for sublist in labels for item in sublist]
-        
-        # unique_labels = []
-        # unique_handles = []
-        # seen_labels = set()
-
-        # for handle, label in zip(handles, labels):
-        #     if label not in seen_labels:
-        #         unique_handles.append(handle)
-        #         unique_labels.append(label)
-        #         seen_labels.add(label)
         ax.legend(
             loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8,
-            # labels=labels
+            handles=handles, labels=labels
         )
-        # ax.legend()
         plt.tight_layout()
 
         self.canvas.draw()
@@ -275,7 +267,8 @@ class SingleMode(QDialog):
 
     def close_dialog(self):
         self.close()
-        # self.parent().show()
+        if self.parent():
+            self.parent().show()
 
     def open_options_dialog(self):
         options_dialog = OptionsDialog(self)
@@ -318,14 +311,14 @@ class MainWindow(QMainWindow):
         self.overlay_mode_button.clicked.connect(self.overlay_mode)
 
     def single_mode(self):
-        self.mode_dialog = SingleMode(self)
+        self.single_mode_dialog = SingleMode("Single Mode", self)
         self.hide()
-        self.mode_dialog.show()
+        self.single_mode_dialog.show()
 
     def overlay_mode(self):
-        self.mode_dialog = OverlayMode(self)
+        self.overlay_mode_dialog = OverlayMode(self)
         self.hide()
-        self.mode_dialog.exec_()
+        self.overlay_mode_dialog.exec_()
 
 
 def main():
