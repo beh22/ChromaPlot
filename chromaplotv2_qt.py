@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
     QMessageBox, QCheckBox, QLabel, QDialogButtonBox
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -18,42 +18,6 @@ To do:
 
 
 '''
-
-class OptionsDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Options")
-
-        # Create layout
-        self.layout = QVBoxLayout()
-
-        # Create and add widgets
-        self.add_fraction_labels_checkbox = QCheckBox("Add fraction labels")
-        self.add_legend_checkbox = QCheckBox("Add Legend")
-        self.shade_fractions_checkbox = QCheckBox("Shade Fractions")
-
-        # Add checkboxes to layout
-        self.layout.addWidget(QLabel("Options"))
-        self.layout.addWidget(self.add_fraction_labels_checkbox)
-        self.layout.addWidget(self.add_legend_checkbox)
-        self.layout.addWidget(self.shade_fractions_checkbox)
-
-        # Add buttons
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        self.layout.addWidget(self.button_box)
-
-        # Set the layout
-        self.setLayout(self.layout)
-
-    def get_options(self):
-        return {
-            'Add fraction labels': self.add_fraction_labels_checkbox.isChecked(),
-            'Add Legend': self.add_legend_checkbox.isChecked(),
-            'Shade Fractions': self.shade_fractions_checkbox.isChecked()
-        }
-
 
 class AnalyseDialog(QDialog):
     def __init__(self, parent=None):
@@ -75,6 +39,59 @@ class AnalyseDialog(QDialog):
         # Set the layout
         self.setLayout(self.layout)
 
+class OptionsDialog(QDialog):
+    legendToggled = pyqtSignal(bool)
+    fractionLabelsToggled = pyqtSignal(bool)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Options")
+
+        # Create layout
+        self.layout = QVBoxLayout()
+
+        # Create and add widgets
+        self.add_fraction_labels_checkbox = QCheckBox("Add fraction labels")
+        self.add_legend_checkbox = QCheckBox("Add Legend")
+
+        self.add_fraction_labels_checkbox.stateChanged.connect(self.toggle_fraction_labels)
+        self.add_legend_checkbox.stateChanged.connect(self.toggle_legend)
+
+        self.shade_fractions_checkbox = QCheckBox("Shade Fractions")
+
+        # Add checkboxes to layout
+        self.layout.addWidget(QLabel("Options"))
+        self.layout.addWidget(self.add_fraction_labels_checkbox)
+        self.layout.addWidget(self.add_legend_checkbox)
+        self.layout.addWidget(self.shade_fractions_checkbox)
+
+        # Add 'Exit' button
+        self.exit_button = QPushButton("Exit")
+        self.exit_button.clicked.connect(self.close)
+        self.layout.addWidget(self.exit_button)
+
+        # Set the layout
+        self.setLayout(self.layout)
+
+    def toggle_legend(self):
+        self.legendToggled.emit(self.add_legend_checkbox.isChecked())
+
+    def toggle_fraction_labels(self):
+        self.fractionLabelsToggled.emit(self.add_fraction_labels_checkbox.isChecked())
+
+    def get_options(self):
+        return {
+            'Add fraction labels': self.add_fraction_labels_checkbox.isChecked(),
+            'Add Legend': self.add_legend_checkbox.isChecked(),
+            'Shade Fractions': self.shade_fractions_checkbox.isChecked()
+        }
+
+    def set_options(self, options):
+        self.add_fraction_labels_checkbox.setChecked(options.get('Add fraction labels', False))
+        self.add_legend_checkbox.setChecked(options.get('Add Legend', False))
+        self.shade_fractions_checkbox.setChecked(options.get('Shade Fractions', False))
+
+      
 
 class SingleMode(QDialog):
     def __init__(self, mode_name, parent=None):
@@ -85,6 +102,13 @@ class SingleMode(QDialog):
         self.loaded_file = None
         self.data = None
         self.colors = ['r', 'g', 'b', 'c', 'm']
+        self.show_legend = False
+        self.show_fraction_labels = False
+        self.options_state = {
+            'Add fraction labels': False,
+            'Add Legend': False,
+            'Shade Fractions': False
+        }
 
         # Create layouts
         self.main_layout = QVBoxLayout()
@@ -96,9 +120,9 @@ class SingleMode(QDialog):
         self.load_data_button = QPushButton("Load data")
         self.clear_data_button = QPushButton("Clear data")
         self.save_plot_button = QPushButton("Save plot")
-        self.back_button = QPushButton("Back")
         self.options_button = QPushButton("Options")
         self.analyse_button = QPushButton("Analyse")
+        self.back_button = QPushButton("Back")
 
         # Add buttons to the button layout
         self.button_layout.addWidget(self.load_data_button)
@@ -178,6 +202,9 @@ class SingleMode(QDialog):
     def update_plot(self):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
+        
+        self.fraction_labels = []
+        self.ax1 = ax
 
         handles = []
         labels = []
@@ -191,6 +218,7 @@ class SingleMode(QDialog):
             x = np.array(self.data[curve][xunits])
             y = np.array(self.data[curve][yunits])
             uv_line, = ax.plot(x, y, label='UV', color='k')
+            ax.set_xlim(left=0, right=max(self.data[curve][xunits]))
             handles.append(uv_line)
             labels.append('UV')
 
@@ -214,7 +242,7 @@ class SingleMode(QDialog):
                     new_ax.spines['right'].set_position(('outward', 40 * len(y_axes)))
                     y_axes.append(new_ax)
 
-                line, = new_ax.plot(x,y, label=curve, color=color)
+                line, = new_ax.plot(x, y, label=curve, color=color)
                 new_ax.set_ylabel(curve, color=color)
                 new_ax.tick_params(axis='y', labelcolor=color)
 
@@ -224,13 +252,48 @@ class SingleMode(QDialog):
         ax.set_xlabel('Volume (mL)')
         ax.set_ylabel('UV (mAU)')
 
-        ax.legend(
-            loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8,
-            handles=handles, labels=labels
-        )
+        if self.show_legend:
+            ax.legend(
+                loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8,
+                handles=handles, labels=labels
+            )
+
+        if self.show_fraction_labels:
+            self.add_fractions()
+
         plt.tight_layout()
 
         self.canvas.draw()
+
+    def add_fractions(self, stript=True, fontsize=6, labheight=5):
+        flabx = []
+        try:
+            f = self.data['Fraction']['ml']
+            flab = self.data['Fraction']['Fraction']
+        except KeyError:
+            raise KeyError('Fraction data does not seem to be present')
+        
+        for i in range(len(flab) - 1):
+            flabx.append((f[i] + f[i+1]) / 2)
+
+        if stript:
+            flab = [x.strip("T\"") for x in flab]
+        else:
+            pass
+
+        for i in range(len(f)):
+            if flab[i] == "Waste":
+                continue
+
+            line = self.ax1.axvline(x=f[i], ymin=0, ymax=0.05, color='red', ls=':')
+            self.fraction_labels.append(line)
+
+        for i in range(len(flabx)):
+            if flab[i] == "Waste":
+                continue
+
+            label = self.ax1.text(flabx[i], labheight, flab[i], fontsize=fontsize, ha='center')
+            self.fraction_labels.append(label)
 
     def clear_data(self):
         reply = QMessageBox.question(
@@ -249,7 +312,6 @@ class SingleMode(QDialog):
                     if widget and widget not in [self.load_data_button, self.clear_data_button, self.save_plot_button, self.back_button]:
                         widget.setParent(None)
                 print("All data cleared.")
-                # QMessageBox.information(self, "Clear Data", "All data has been cleared.")
                 self.canvas.draw()
         else:
             print("Data clearing canceled.")
@@ -272,14 +334,24 @@ class SingleMode(QDialog):
 
     def open_options_dialog(self):
         options_dialog = OptionsDialog(self)
-        # options_dialog.show()
-        if options_dialog.exec_() == QDialog.Accepted:
-            options = options_dialog.get_options()
-            print("Selected options:", options)
+        options_dialog.set_options(self.options_state)
+        options_dialog.legendToggled.connect(self.set_legend_visibility)
+        options_dialog.fractionLabelsToggled.connect(self.set_fraction_labels_visibility)
+        options_dialog.show()
+        self.options_state = options_dialog.get_options()
+
+    def set_legend_visibility(self, visible):
+        self.show_legend = visible
+        self.update_plot()
+
+    def set_fraction_labels_visibility(self, visible):
+        self.show_fraction_labels = visible
+        self.update_plot()
 
     def open_analyse_dialog(self):
         analyse_dialog = AnalyseDialog(self)
         analyse_dialog.show()
+
 
 class OverlayMode(QDialog):
     pass
