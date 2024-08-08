@@ -1,10 +1,11 @@
 import sys
-from AKdatafile import *
+import AKdatafile as AKdf
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
-    QMessageBox, QCheckBox, QLabel, QDialogButtonBox
+    QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit
 )
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QFont
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -13,9 +14,18 @@ from matplotlib.ticker import AutoMinorLocator
 # from rich.traceback import install
 # install()
 
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['font.sans-serif'] = "Arial"
+plt.rcParams['font.family'] = "sans-serif"
+
 '''
 To do:
-
+- Give error rather than quitting when options are tried with no data loaded
+- Sort formatting of curve checkboxes - move into new dialog?, easier to add options for color, ls etc.
+- Remove first and waste fractions
+- Tabs
+- Add run log as annotations
 
 '''
 
@@ -42,6 +52,9 @@ class AnalyseDialog(QDialog):
 class OptionsDialog(QDialog):
     legendToggled = pyqtSignal(bool)
     fractionLabelsToggled = pyqtSignal(bool)
+    shadeFractionsRequested = pyqtSignal(int, int)
+    undoShadeRequested = pyqtSignal()
+    clearShadeRequested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -53,22 +66,47 @@ class OptionsDialog(QDialog):
         # Create and add widgets
         self.add_fraction_labels_checkbox = QCheckBox("Add fraction labels")
         self.add_legend_checkbox = QCheckBox("Add Legend")
+        self.add_legend_checkbox.setChecked(False)  # Legend off by default
 
         self.add_fraction_labels_checkbox.stateChanged.connect(self.toggle_fraction_labels)
         self.add_legend_checkbox.stateChanged.connect(self.toggle_legend)
 
-        self.shade_fractions_checkbox = QCheckBox("Shade Fractions")
+        self.start_fraction_label = QLabel("Start Fraction")
+        self.start_fraction_input = QLineEdit()
+        self.stop_fraction_label = QLabel("Stop Fraction")
+        self.stop_fraction_input = QLineEdit()
+        self.shade_button = QPushButton("Shade")
+        self.undo_button = QPushButton("Undo")
+        self.clear_button = QPushButton("Clear")
+
+        self.shade_button.clicked.connect(self.shade_fractions)
+        self.undo_button.clicked.connect(self.undo_shade)
+        self.clear_button.clicked.connect(self.clear_shade)
+
+        options_label = QLabel("Options")
+        bold_large_font = QFont()
+        bold_large_font.setBold(True)
+        bold_large_font.setPointSize(16)
+        options_label.setFont(bold_large_font)
+
+        shade_fractions_label = QLabel("Shade Fractions")
+        bold_font = QFont()
+        bold_font.setBold(True)
+        shade_fractions_label.setFont(bold_font)
+
 
         # Add checkboxes to layout
-        self.layout.addWidget(QLabel("Options"))
+        self.layout.addWidget(options_label)
         self.layout.addWidget(self.add_fraction_labels_checkbox)
         self.layout.addWidget(self.add_legend_checkbox)
-        self.layout.addWidget(self.shade_fractions_checkbox)
-
-        # Add 'Exit' button
-        self.exit_button = QPushButton("Exit")
-        self.exit_button.clicked.connect(self.close)
-        self.layout.addWidget(self.exit_button)
+        self.layout.addWidget(shade_fractions_label)
+        self.layout.addWidget(self.start_fraction_label)
+        self.layout.addWidget(self.start_fraction_input)
+        self.layout.addWidget(self.stop_fraction_label)
+        self.layout.addWidget(self.stop_fraction_input)
+        self.layout.addWidget(self.shade_button)
+        self.layout.addWidget(self.undo_button)
+        self.layout.addWidget(self.clear_button)
 
         # Set the layout
         self.setLayout(self.layout)
@@ -79,19 +117,30 @@ class OptionsDialog(QDialog):
     def toggle_fraction_labels(self):
         self.fractionLabelsToggled.emit(self.add_fraction_labels_checkbox.isChecked())
 
+    def shade_fractions(self):
+        try:
+            start_frac = int(self.start_fraction_input.text())
+            stop_frac = int(self.stop_fraction_input.text())
+            self.shadeFractionsRequested.emit(start_frac, stop_frac)
+        except ValueError:
+            QMessageBox.warning(self, "Input Error", "Please enter valid integer fractions.")
+
+    def undo_shade(self):
+        self.undoShadeRequested.emit()
+
+    def clear_shade(self):
+        self.clearShadeRequested.emit()
+
     def get_options(self):
         return {
             'Add fraction labels': self.add_fraction_labels_checkbox.isChecked(),
             'Add Legend': self.add_legend_checkbox.isChecked(),
-            'Shade Fractions': self.shade_fractions_checkbox.isChecked()
         }
 
     def set_options(self, options):
         self.add_fraction_labels_checkbox.setChecked(options.get('Add fraction labels', False))
         self.add_legend_checkbox.setChecked(options.get('Add Legend', False))
-        self.shade_fractions_checkbox.setChecked(options.get('Shade Fractions', False))
 
-      
 
 class SingleMode(QDialog):
     def __init__(self, mode_name, parent=None):
@@ -106,9 +155,11 @@ class SingleMode(QDialog):
         self.show_fraction_labels = False
         self.options_state = {
             'Add fraction labels': False,
-            'Add Legend': False,
-            'Shade Fractions': False
+            'Add Legend': False
         }
+
+        self.shaded_regions = []
+        self.show_shaded_fractions = False
 
         # Create layouts
         self.main_layout = QVBoxLayout()
@@ -174,7 +225,7 @@ class SingleMode(QDialog):
         if file_name:
             print(f"File loaded: {file_name}")
             self.loaded_file = file_name
-            self.data = AKdatafile(file_name).genAKdict(1, 2)
+            self.data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
             self.create_checkboxes()
             self.update_plot()
 
@@ -261,6 +312,11 @@ class SingleMode(QDialog):
         if self.show_fraction_labels:
             self.add_fractions()
 
+        if self.show_shaded_fractions:
+            for start_frac, stop_frac in self.shaded_regions:
+                self._shade_fractions(start_frac, stop_frac)
+
+      
         plt.tight_layout()
 
         self.canvas.draw()
@@ -337,6 +393,9 @@ class SingleMode(QDialog):
         options_dialog.set_options(self.options_state)
         options_dialog.legendToggled.connect(self.set_legend_visibility)
         options_dialog.fractionLabelsToggled.connect(self.set_fraction_labels_visibility)
+        options_dialog.shadeFractionsRequested.connect(self.set_shaded_fractions_visibility)
+        options_dialog.undoShadeRequested.connect(self.undo_shade)
+        options_dialog.clearShadeRequested.connect(self.clear_shaded_regions)
         options_dialog.show()
         self.options_state = options_dialog.get_options()
 
@@ -346,6 +405,69 @@ class SingleMode(QDialog):
 
     def set_fraction_labels_visibility(self, visible):
         self.show_fraction_labels = visible
+        self.update_plot()
+
+    def set_shaded_fractions_visibility(self, start_frac, stop_frac, color='grey', alpha=0.5):
+        try:
+            # Retrieve fraction data
+            fractions = self.data['Fraction']['Fraction']
+            volumes = self.data['Fraction']['ml']
+        except KeyError:
+            QMessageBox.warning(self, "Error", "Fraction data does not seem to be present.")
+            return
+
+        # Clean and convert fraction numbers to integers
+        fractions = [int(x.strip("T\"")) for x in fractions if x.strip("T\"").isdigit()]
+
+        # Check if specified fractions exist in the data
+        if start_frac not in fractions or stop_frac not in fractions:
+            QMessageBox.warning(self, "Error", "Specified fractions are not in the data.")
+            return
+
+        # Get the indices of the start and stop fractions
+        start_index = fractions.index(start_frac)
+        stop_index = fractions.index(stop_frac)
+
+        # Get the corresponding volume ranges
+        start_vol = volumes[start_index]
+        stop_vol = volumes[stop_index]
+
+        # Save the shaded region for potential future use
+        self.shaded_regions.append((start_frac, stop_frac))  # Save the fraction range
+        self.show_shaded_fractions = True
+
+        # Apply shading
+        self._shade_fractions(start_frac, stop_frac, color=color, alpha=alpha)
+
+    def _shade_fractions(self, start_frac, stop_frac, color='grey', alpha=0.5):
+        # Retrieve fraction data
+        fractions = self.data['Fraction']['Fraction']
+        volumes = self.data['Fraction']['ml']
+        
+        # Convert fraction numbers to integers
+        fractions = [int(x.strip("T\"")) for x in fractions if x.strip("T\"").isdigit()]
+
+        # Get the indices of the start and stop fractions
+        start_index = fractions.index(start_frac)
+        stop_index = fractions.index(stop_frac)
+
+        # Get the corresponding volume ranges
+        start_vol = volumes[start_index]
+        stop_vol = volumes[stop_index]
+
+        # Shade the area under the curve between the start and stop volumes
+        xdata, ydata = self.ax1.lines[0].get_data()  # Assuming the UV curve is the first plotted line
+        mask = (xdata >= start_vol) & (xdata <= stop_vol)
+        self.ax1.fill_between(xdata[mask], ydata[mask], color=color, alpha=alpha)
+        self.canvas.draw()
+
+    def undo_shade(self):
+        if self.shaded_regions:
+            self.shaded_regions.pop()
+            self.update_plot()
+
+    def clear_shaded_regions(self):
+        self.shaded_regions.clear()
         self.update_plot()
 
     def open_analyse_dialog(self):
