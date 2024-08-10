@@ -1,4 +1,5 @@
 import sys
+import os
 import AKdatafile as AKdf
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
@@ -11,8 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.ticker import AutoMinorLocator
 
-# from rich.traceback import install
-# install()
+from rich.traceback import install
+install()
 
 plt.rcParams['pdf.fonttype'] = 42
 plt.rcParams['ps.fonttype'] = 42
@@ -28,7 +29,6 @@ To do:
 - Sheeps
 - Shade volume option for when fractions aren't present
 - Change fonts?
-- Custom y labels
 - More complete error messages
 - Sort fraction label appearance
 - Only show fraction labels if they are within the x range currently shown
@@ -681,6 +681,11 @@ class SingleMode(QDialog):
             QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
 
     def close_dialog(self):
+        if self.select_curves_dialog:
+            self.select_curves_dialog.close()
+        if self.options_dialog:
+            self.options_dialog.close()
+
         self.close()
         if self.parent():
             self.parent().show()
@@ -816,21 +821,410 @@ class OverlayMode(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Overlay Mode")
 
-        # Create layout
+        self.loaded_datasets = {}  
+        self.plot_settings = {}  
+
+        self.xmin = None
+        self.xmax = None
+        self.ymin = None
+        self.ymax = None
+
+        self.show_legend = False  
+
+        self.select_curves_dialog = None
+        self.options_dialog = None
+
+        # Create layouts
+        self.main_layout = QVBoxLayout()
+        self.button_layout = QHBoxLayout()
+        self.side_layout = QHBoxLayout()
+
+        # Create buttons
+        self.load_data_button = QPushButton("Load data")
+        self.clear_data_button = QPushButton("Clear data")
+        self.save_plot_button = QPushButton("Save plot")
+        self.options_button = QPushButton("Options")
+        self.select_curves_button = QPushButton("Select Curves")
+        self.back_button = QPushButton("Back")
+
+        # Add buttons to the button layout
+        self.button_layout.addWidget(self.load_data_button)
+        self.button_layout.addWidget(self.clear_data_button)
+        self.button_layout.addWidget(self.save_plot_button)
+        self.button_layout.addWidget(self.options_button)
+        self.button_layout.addWidget(self.select_curves_button)
+        self.button_layout.addWidget(self.back_button)
+
+        # Create a matplotlib figure and canvas
+        self.figure = plt.figure(figsize=(7, 3.5))
+        self.canvas = FigureCanvas(self.figure)
+
+        # Add the canvas and checkbox layout to the side layout
+        self.side_layout.addWidget(self.canvas)
+
+        # Add the button layout and side layout to the main layout
+        self.main_layout.addLayout(self.button_layout)
+        self.main_layout.addLayout(self.side_layout)
+
+        # Set the layout to the dialog
+        self.setLayout(self.main_layout)
+
+        # Connect the buttons to their respective methods
+        self.load_data_button.clicked.connect(self.load_data)
+        self.clear_data_button.clicked.connect(self.clear_data)
+        self.save_plot_button.clicked.connect(self.save_plot)
+        self.options_button.clicked.connect(self.open_options_dialog)
+        self.select_curves_button.clicked.connect(self.open_select_curves_dialog)
+        self.back_button.clicked.connect(self.close_dialog)
+
+    def load_data(self):
+        # Load data and open select curves dialog
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_name, _ = QFileDialog.getOpenFileName(
+            self, "Load Data File", "",
+            "Text Files (*.txt);;ASC Files (*.asc);;CSV Files (*.csv);;All Files (*)",
+            options=options
+        )
+        if file_name:
+            print(f"File loaded: {file_name}")
+            dataset_name = os.path.basename(file_name)
+            data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
+
+            # Store dataset and default plot settings
+            self.loaded_datasets[dataset_name] = data
+            self.plot_settings[dataset_name] = {
+                'linestyle': '-',
+                'linewidth': 1.5,
+                'color': 'black',
+                'label': dataset_name
+            }
+
+            # Open the Select Curves dialog for this dataset
+            self.open_select_curves_dialog()
+
+            # Update the plot with the new dataset
+            self.update_plot()
+
+    def open_select_curves_dialog(self):
+        if not self.loaded_datasets:
+            QMessageBox.warning(self, "No Data Loaded", "Please load data before using this option")
+            return
+        if self.select_curves_dialog is not None:
+            self.select_curves_dialog.close()
+
+        self.select_curves_dialog = OverlaySelectCurvesDialog(self.loaded_datasets, self.plot_settings, self)
+        self.select_curves_dialog.move(self.x() + 750, self.y() + 50)
+        self.select_curves_dialog.show()
+
+        # Connect the signal for updating the plot with selected curves
+        self.select_curves_dialog.curveOptionsChanged.connect(self.update_plot)
+
+    def open_options_dialog(self):
+        if not self.loaded_datasets:
+            QMessageBox.warning(self, "No Data Loaded", "Please load data before using this option")
+            return
+        if self.options_dialog is not None:
+            self.options_dialog.close()
+
+        self.options_dialog = OverlayOptionsDialog(self)
+        self.options_dialog.move(self.x() - 250, self.y() + 50)         
+        self.options_dialog.show()
+
+        # Connect signals for x and y limits, and legend visibility
+        self.options_dialog.xLimitChanged.connect(self.set_x_limits)
+        self.options_dialog.yLimitChanged.connect(self.set_y_limits)
+        self.options_dialog.resetXLimits.connect(self.reset_x_limits)
+        self.options_dialog.resetYLimits.connect(self.reset_y_limits)        
+        self.options_dialog.legendToggled.connect(self.toggle_legend)
+
+    def update_plot(self):
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+
+        handles = []
+        labels = []
+
+        for dataset_name, data in self.loaded_datasets.items():
+            settings = self.plot_settings[dataset_name]
+            curvekeys = list(data['UV'].keys())
+            x = np.array(data['UV'][curvekeys[0]])
+            y = np.array(data['UV'][curvekeys[1]])
+
+            line, = ax.plot(
+                x, y, label=settings['label'],
+                color=settings['color'],
+                linestyle=settings['linestyle'],
+                linewidth=settings['linewidth']
+            )
+            handles.append(line)
+            labels.append(settings['label'])
+
+        # Apply custom limits if set
+        if self.xmin is not None or self.xmax is not None:
+            ax.set_xlim(left=self.xmin, right=self.xmax)
+        else:
+            ax.set_xlim(left=0, right=max(x))
+
+        if self.ymin is not None or self.ymax is not None:
+            ax.set_ylim(bottom=self.ymin, top=self.ymax)
+
+        ax.set_xlabel('Volume (mL)')
+        ax.set_ylabel('UV (mAU)')
+
+        if self.show_legend:
+            ax.legend(handles=handles, labels=labels)
+
+        plt.tight_layout()
+        self.canvas.draw()
+
+    def set_x_limits(self, xmin, xmax):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.update_plot()
+
+    def set_y_limits(self, ymin, ymax):
+        self.ymin = ymin
+        self.ymax = ymax
+        self.update_plot()
+
+    def reset_x_limits(self):
+        self.xmin = None
+        self.xmax = None
+        self.update_plot()
+
+    def reset_y_limits(self):
+        self.ymin = None
+        self.ymax = None
+        self.update_plot()       
+
+    def toggle_legend(self, visible):
+        self.show_legend = visible
+        self.update_plot()
+
+    def clear_data(self):
+        if self.select_curves_dialog:
+            self.select_curves_dialog.close()
+        if self.options_dialog:
+            self.options_dialog.close()
+        self.loaded_datasets.clear()
+        self.plot_settings.clear()
+        self.figure.clear()
+        self.canvas.draw()
+
+    def save_plot(self):
+        if not self.loaded_datasets:
+            QMessageBox.warning(self, "No Data Loaded", "Please load data before saving the plot")
+            return
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Save Plot", "",
+            "PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
+            options=options
+        )
+        if file_name:
+            self.figure.savefig(file_name)
+            QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
+
+    def close_dialog(self):
+        if self.select_curves_dialog:
+            self.select_curves_dialog.close()
+        if self.options_dialog:
+            self.options_dialog.close()
+
+        self.close()
+        if self.parent():
+            self.parent().show()
+
+
+class OverlaySelectCurvesDialog(QDialog):
+    curveOptionsChanged = pyqtSignal()
+
+    def __init__(self, datasets, plot_settings, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Curves")
+
+        self.datasets = datasets
+        self.plot_settings = plot_settings
+
+        self.main_layout = QVBoxLayout()
+
+        for dataset_name in self.datasets.keys():
+            self.setup_curve_controls(dataset_name)
+
+        self.setLayout(self.main_layout)
+
+    def setup_curve_controls(self, dataset_name):
+        settings = self.plot_settings[dataset_name]
+
+        checkbox = QCheckBox(dataset_name)
+        checkbox.setChecked(True)
+        checkbox.stateChanged.connect(self.update_curve_options)
+
+        linestyle_combo = QComboBox()
+        linestyle_combo.addItems(['-', '--', '-.', ':'])
+        linestyle_combo.setCurrentIndex(0)
+        linestyle_combo.currentIndexChanged.connect(lambda index: self.handle_linestyle_change(dataset_name, index))
+
+        linewidth_box = QDoubleSpinBox()
+        linewidth_box.setRange(0.5, 5.0)
+        linewidth_box.setSingleStep(0.5)
+        linewidth_box.setValue(1.5)
+        linewidth_box.valueChanged.connect(lambda value: self.handle_linewidth_change(dataset_name, value))
+
+        ylabel_edit = QLineEdit(settings['label'])
+        ylabel_edit.setPlaceholderText("Legend Label")
+        ylabel_edit.editingFinished.connect(lambda: self.handle_label_change(dataset_name, ylabel_edit.text()))
+
+        color_button = QPushButton("Color")
+        color_button.clicked.connect(lambda: self.handle_color_change(dataset_name))
+
+        clear_button = QPushButton("Clear Data")
+        clear_button.clicked.connect(lambda: self.clear_curve_data(dataset_name))
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(checkbox)
+        hbox.addWidget(linestyle_combo)
+        hbox.addWidget(linewidth_box)
+        hbox.addWidget(ylabel_edit)
+        hbox.addWidget(color_button)
+        hbox.addWidget(clear_button)
+
+        self.main_layout.addLayout(hbox)
+
+    def update_curve_options(self, state):
+        self.curveOptionsChanged.emit()
+
+    def handle_linestyle_change(self, dataset_name, index):
+        self.plot_settings[dataset_name]['linestyle'] = ['-', '--', '-.', ':'][index]
+        self.curveOptionsChanged.emit()
+
+    def handle_linewidth_change(self, dataset_name, value):
+        self.plot_settings[dataset_name]['linewidth'] = value
+        self.curveOptionsChanged.emit()
+
+    def handle_label_change(self, dataset_name, label):
+        self.plot_settings[dataset_name]['label'] = label
+        self.curveOptionsChanged.emit()
+
+    def handle_color_change(self, dataset_name):
+        color = QColorDialog.getColor(Qt.black, self, "Select Color for " + dataset_name)
+        if color.isValid():
+            self.plot_settings[dataset_name]['color'] = color.name()
+            self.curveOptionsChanged.emit()
+
+    def clear_curve_data(self, dataset_name):
+        del self.datasets[dataset_name]
+        del self.plot_settings[dataset_name]
+        self.update_curve_options(None)
+
+
+class OverlayOptionsDialog(QDialog):
+    legendToggled = pyqtSignal(bool)
+    xLimitChanged = pyqtSignal(float, float)
+    yLimitChanged = pyqtSignal(float, float)
+    resetXLimits = pyqtSignal()
+    resetYLimits = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Options")
+
         self.layout = QVBoxLayout()
 
-        self.layout.addWidget(QLabel("Overlay Mode"))
-        self.layout.addWidget(QLabel("Functionality yet to be added"))
+        options_label = QLabel("Options")
+        options_label.setFont(self._create_bold_font(16))
+        self.layout.addWidget(options_label)        
 
-        # Add buttons
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        self.layout.addWidget(self.button_box)
+        self.add_legend_checkbox = QCheckBox("Add Legend")
+        self.add_legend_checkbox.setChecked(False)
+        self.add_legend_checkbox.stateChanged.connect(self.toggle_legend)
 
-        # Set the layout
+        limits_label = QLabel("Define Limits")
+        limits_label.setFont(self._create_bold_font(12))
+
+        # X-axis inputs and buttons
+        x_axis_input_layout = QHBoxLayout()
+        self.xmin_input = QLineEdit()
+        self.xmax_input = QLineEdit()
+        self.xmin_input.setPlaceholderText("Min X")
+        self.xmax_input.setPlaceholderText("Max X")
+        
+        x_axis_input_layout.addWidget(self.xmin_input)
+        x_axis_input_layout.addWidget(self.xmax_input)
+
+        x_axis_button_layout = QHBoxLayout()
+        self.apply_x_button = QPushButton("Apply")
+        self.apply_x_button.clicked.connect(self.apply_x_limits)
+        self.reset_x_button = QPushButton("Reset")
+        self.reset_x_button.clicked.connect(self.reset_x_limits)
+        
+        x_axis_button_layout.addWidget(self.apply_x_button)
+        x_axis_button_layout.addWidget(self.reset_x_button)
+
+        # Y-axis inputs and buttons
+        y_axis_input_layout = QHBoxLayout()
+        self.ymin_input = QLineEdit()
+        self.ymax_input = QLineEdit()
+        self.ymin_input.setPlaceholderText("Min Y")
+        self.ymax_input.setPlaceholderText("Max Y")
+        
+        y_axis_input_layout.addWidget(self.ymin_input)
+        y_axis_input_layout.addWidget(self.ymax_input)
+
+        y_axis_button_layout = QHBoxLayout()
+        self.apply_y_button = QPushButton("Apply")
+        self.apply_y_button.clicked.connect(self.apply_y_limits)
+        self.reset_y_button = QPushButton("Reset")
+        self.reset_y_button.clicked.connect(self.reset_y_limits)
+        
+        y_axis_button_layout.addWidget(self.apply_y_button)
+        y_axis_button_layout.addWidget(self.reset_y_button)
+
+        # Add widgets to the main layout
+        self.layout.addWidget(self.add_legend_checkbox)
+        self.layout.addWidget(limits_label)
+        
+        self.layout.addWidget(QLabel("X-axis limits:"))
+        self.layout.addLayout(x_axis_input_layout)
+        self.layout.addLayout(x_axis_button_layout)
+
+        self.layout.addWidget(QLabel("Y-axis limits:"))
+        self.layout.addLayout(y_axis_input_layout)
+        self.layout.addLayout(y_axis_button_layout)
+
         self.setLayout(self.layout)
 
+    def _create_bold_font(self, size):
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(size)
+        return font
+
+    def toggle_legend(self, state):
+        self.legendToggled.emit(state == Qt.Checked)
+
+    def apply_x_limits(self):
+        try:
+            xmin = float(self.xmin_input.text())
+            xmax = float(self.xmax_input.text())
+            self.xLimitChanged.emit(xmin, xmax)
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Please enter valid numerical values for X-axis limits.")
+
+    def apply_y_limits(self):
+        try:
+            ymin = float(self.ymin_input.text())
+            ymax = float(self.ymax_input.text())
+            self.yLimitChanged.emit(ymin, ymax)
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Please enter valid numerical values for Y-axis limits.")
+
+    def reset_x_limits(self):
+        self.resetXLimits.emit()
+
+    def reset_y_limits(self):
+        self.resetYLimits.emit()
 
 class MainWindow(QMainWindow):
     def __init__(self):
