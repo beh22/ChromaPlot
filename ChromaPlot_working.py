@@ -22,6 +22,7 @@ plt.rcParams['font.family'] = "sans-serif"
 
 '''
 To do:
+- Improve main window - add logo and other text. Welcome to... etc.
 - Remove first and waste fractions
 - Tabs
 - Add run log as annotations

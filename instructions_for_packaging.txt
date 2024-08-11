@@ -1,0 +1,6 @@
+Instructions for packaging into an app for Mac and Windows
+
+
+pyinstaller --windowed --name="ChromaPlot" --icon="cp_thumbnail.icns" ChromaPlot_v0.1.py
+
+Run ./create_dmg.com
