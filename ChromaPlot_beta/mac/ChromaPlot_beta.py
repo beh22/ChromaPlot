@@ -1,9 +1,7 @@
 '''
-ChromaPlot version 0.1
-Authors; Billy Hobbs and Felipe Ossa
+ChromaPlot Beta
+Authors: Billy Hobbs and Felipe Ossa
 '''
-
-
 
 import sys
 import os
