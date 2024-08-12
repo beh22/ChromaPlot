@@ -1,5 +1,8 @@
 Instructions for packaging into an app for Mac and Windows
 
+Make usre pyinstaller and create-dmg are installed:
+    pip install pyinstaller / conda install conda-forge::pyinstaller
+    brew install create-dmg
 
 pyinstaller --windowed --name="ChromaPlot" --icon="cp_thumbnail.icns" ChromaPlot_v0.1.py
 
