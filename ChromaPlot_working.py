@@ -1471,7 +1471,7 @@ class MainWindow(QMainWindow):
 
         # Add a link to GitHub and email
         github_link = QLabel()
-        github_link.setText('Please report issues on <a href="https://github.com/beh22/plotting_app">GitHub</a> or <a href="mailto:billyehobbs@gmail.com">email us</a>')
+        github_link.setText('Please report issues on <a href="https://github.com/beh22/ChromaPlot/">GitHub</a> or <a href="mailto:billyehobbs@gmail.com">email us</a>')
         github_link.setOpenExternalLinks(True)
         github_link.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(github_link)
