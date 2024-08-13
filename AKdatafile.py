@@ -90,4 +90,7 @@ class AKdatafile:
             self.colnocheck.append(cc)
         self.cc = self.colnocheck.count(self.colnocheck[0]) == len(self.colnocheck)
         self.ce = all(self.colnoerror)
+        uvkey = [x for x in odict.keys() if 'UV' in x]
+        odict['UV'] = odict[uvkey[0]]
+        del odict[uvkey[0]]
         return odict

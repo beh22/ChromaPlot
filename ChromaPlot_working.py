@@ -1409,7 +1409,8 @@ class MainWindow(QMainWindow):
 
         # Add the logo
         logo_label = QLabel()
-        logo_pixmap = QPixmap("./logos/cp_logo.jpg")
+        logo_path = self.resource_path("./logos/cp_logo.jpg")
+        logo_pixmap = QPixmap(logo_path)
         desired_width = 300
         desired_height = 150
         scaled_logo_pixmap = logo_pixmap.scaled(desired_width, desired_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -1418,7 +1419,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(logo_label)
 
         # Add a welcome message
-        welcome_label = QLabel("Welcome to ChromaPlot (Version 0.1)")
+        welcome_label = QLabel("Welcome to ChromaPlot (Beta (13/8/24))")
         welcome_label.setAlignment(Qt.AlignCenter)
         welcome_label.setFont(QFont("Arial", 16, QFont.Bold))
         main_layout.addWidget(welcome_label)
@@ -1483,6 +1484,11 @@ class MainWindow(QMainWindow):
         # Connect the buttons to their respective methods
         self.single_mode_button.clicked.connect(self.single_mode)
         self.overlay_mode_button.clicked.connect(self.overlay_mode)
+
+    def resource_path(self, relative_path):
+        if hasattr(sys, '_MEIPASS'):
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(os.path.abspath("."), relative_path)
 
     def single_mode(self):
         self.single_mode_dialog = SingleMode("Single Mode", self)
