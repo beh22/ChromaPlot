@@ -3,7 +3,8 @@ import os
 import AKdatafile as AKdf
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
-    QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit, QColorDialog, QComboBox, QDoubleSpinBox
+    QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit, QColorDialog, QComboBox, QDoubleSpinBox,
+    QButtonGroup, QRadioButton
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QPixmap
@@ -48,10 +49,7 @@ class SingleMode(QDialog):
         self.data = None
         self.show_legend = False
         self.show_fraction_labels = False
-        self.options_state = {
-            'Add fraction labels': False,
-            'Add Legend': False
-        }
+        self.legend_location = 'upper center'
 
         self.colors = ['r', 'g', 'b', 'c', 'm']
 
@@ -249,7 +247,10 @@ class SingleMode(QDialog):
         ax.set_xlabel('Volume (mL)')
 
         if self.show_legend:
-            ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8, handles=handles, labels=labels)
+            if self.legend_location == 'upper center':
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8, handles=handles, labels=labels)
+            else:
+                ax.legend(loc='best', fontsize=8, handles=handles, labels=labels)
 
         if self.show_fraction_labels:
             self.add_fractions()
@@ -259,6 +260,10 @@ class SingleMode(QDialog):
 
         plt.tight_layout()
         self.canvas.draw()
+
+    def set_legend_location(self, location):
+        self.legend_location = location
+        self.update_plot()
 
     def clear_data(self):
         if self.options_dialog:
@@ -391,6 +396,7 @@ class SingleMode(QDialog):
         self.options_dialog.yLimitChanged.connect(self.set_y_limits)
         self.options_dialog.resetXLimits.connect(self.reset_x_limits)
         self.options_dialog.resetYLimits.connect(self.reset_y_limits)
+        self.options_dialog.legendLocationChanged.connect(self.set_legend_location)
         self.options_dialog.move(self.x() - 230, self.y() + 50) 
         self.options_dialog.show()
 
@@ -458,11 +464,16 @@ class SingleMode(QDialog):
             # Get the corresponding volume ranges
             start_index = fractions.index(int(start_value))
             stop_index = fractions.index(int(stop_value))
+
             start_vol = volumes[start_index]
-            stop_vol = volumes[stop_index]
+
+            if stop_index + 1 < len(volumes):
+                stop_vol = volumes[stop_index + 1]
+            else:
+                stop_vol = volumes[stop_index]
 
             # Store the actual volumes for shading
-            self.shaded_regions.append((start_vol, stop_vol, color, alpha))  # Store volumes, color and alpha
+            self.shaded_regions.append((start_vol, stop_vol, color, alpha))
         else:
             self.shaded_regions.append((start_value, stop_value, color, alpha))
 
@@ -701,6 +712,7 @@ class OptionsDialog(QDialog):
     yLimitChanged = pyqtSignal(float, float)
     resetXLimits = pyqtSignal()
     resetYLimits = pyqtSignal()
+    legendLocationChanged = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -721,8 +733,23 @@ class OptionsDialog(QDialog):
         self.add_fraction_labels_checkbox.stateChanged.connect(self.toggle_fraction_labels)
         self.add_legend_checkbox.stateChanged.connect(self.toggle_legend)
 
+        self.legend_location_group = QButtonGroup(self)
+        self.legend_above_radio = QRadioButton("Above Plot")
+        self.legend_best_radio = QRadioButton("Best Location")
+        self.legend_above_radio.setChecked(True)
+
+        self.legend_location_group.addButton(self.legend_above_radio)
+        self.legend_location_group.addButton(self.legend_best_radio)
+
+        self.legend_above_radio.toggled.connect(self.update_legend_location)
+
+        legend_layout = QHBoxLayout()
+        legend_layout.addWidget(self.add_legend_checkbox)
+        legend_layout.addWidget(self.legend_above_radio)
+        legend_layout.addWidget(self.legend_best_radio)
+
+        self.layout.addLayout(legend_layout)
         self.layout.addWidget(self.add_fraction_labels_checkbox)
-        self.layout.addWidget(self.add_legend_checkbox)
 
         # Section: Define Limits
         limits_label = QLabel("Define Limits")
@@ -841,6 +868,12 @@ class OptionsDialog(QDialog):
 
     def toggle_fraction_labels(self):
         self.fractionLabelsToggled.emit(self.add_fraction_labels_checkbox.isChecked())
+
+    def update_legend_location(self):
+        if self.legend_above_radio.isChecked():
+            self.legendLocationChanged.emit('upper center')
+        else:
+            self.legendLocationChanged.emit('best')
 
     def update_shading_mode(self):
         mode = self.shading_mode_toggle.currentText()
@@ -1402,7 +1435,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("ChromaPlot")
 
-        # self.setStyleSheet("background-color: #3e3e3e;")
+        self.setStyleSheet("background-color: #3e3e3e;")
 
         # Create the main layout
         main_layout = QVBoxLayout()
@@ -1500,126 +1533,126 @@ class MainWindow(QMainWindow):
         self.hide()
         self.overlay_mode_dialog.exec_()
 
-# global_stylesheet = """
-# /* General background and text color for all widgets */
-# QMainWindow, QDialog, QWidget {
-#     background-color: #3e3e3e;
-#     color: white;
-# }
+global_stylesheet = """
+/* General background and text color for all widgets */
+QMainWindow, QDialog, QWidget {
+    background-color: #3e3e3e;
+    color: white;
+}
 
-# /* QPushButton Styling */
-# QPushButton {
-#     background-color: #a68d8d;
-#     color: white;
-#     font-size: 14px;
-#     font-weight: bold;
-#     border: 1px solid #d34333;
-#     padding: 8px 16px;
-#     border-radius: 4px;
-#     transition: background-color 0.3s ease;
-# }
-# QPushButton:hover {
-#     background-color: #d34333;
-# }
-# QPushButton:pressed {
-#     background-color: #8b5c5c;
-# }
+/* QPushButton Styling */
+QPushButton {
+    background-color: #a68d8d;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #d34333;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+QPushButton:hover {
+    background-color: #d34333;
+}
+QPushButton:pressed {
+    background-color: #8b5c5c;
+}
 
-# /* QLabel Styling */
-# QLabel {
-#     font-size: 14px;
-#     color: white;
-# }
+/* QLabel Styling */
+QLabel {
+    font-size: 14px;
+    color: white;
+}
 
-# QLabel#welcome_label {
-#     font-weight: bold;
-#     font-size: 20px;
-#     color: #d34333;
-# }
+QLabel#welcome_label {
+    font-weight: bold;
+    font-size: 20px;
+    color: #d34333;
+}
 
-# QLabel#description_label {
-#     font-size: 16px;
-#     color: white;
-# }
+QLabel#description_label {
+    font-size: 16px;
+    color: white;
+}
 
-# /* QLineEdit Styling */
-# QLineEdit {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 2px solid #d34333;
-#     border-radius: 5px;
-#     padding: 5px;
-#     font-size: 14px;
-# }
-# QLineEdit:focus {
-#     border-color: #a68d8d;
-# }
+/* QLineEdit Styling */
+QLineEdit {
+    background-color: #3e3e3e;
+    color: white;
+    border: 2px solid #d34333;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 14px;
+}
+QLineEdit:focus {
+    border-color: #a68d8d;
+}
 
-# /* QComboBox Styling */
-# QComboBox {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 2px solid #d34333;
-#     padding: 5px;
-#     font-size: 14px;
-#     border-radius: 5px;
-# }
-# QComboBox::drop-down {
-#     border-left: 2px solid #d34333;
-# }
-# QComboBox QAbstractItemView {
-#     background-color: #3e3e3e;
-#     color: white;
-#     selection-background-color: #a68d8d;
-# }
+/* QComboBox Styling */
+QComboBox {
+    background-color: #3e3e3e;
+    color: white;
+    border: 2px solid #d34333;
+    padding: 5px;
+    font-size: 14px;
+    border-radius: 5px;
+}
+QComboBox::drop-down {
+    border-left: 2px solid #d34333;
+}
+QComboBox QAbstractItemView {
+    background-color: #3e3e3e;
+    color: white;
+    selection-background-color: #a68d8d;
+}
 
-# /* QSpinBox and QDoubleSpinBox Styling */
-# QSpinBox, QDoubleSpinBox {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 2px solid #d34333;
-#     border-radius: 5px;
-#     padding: 5px;
-#     font-size: 14px;
-# }
-# QSpinBox::up-button, QDoubleSpinBox::up-button {
-#     background-color: #a68d8d;
-# }
-# QSpinBox::down-button, QDoubleSpinBox::down-button {
-#     background-color: #a68d8d;
-# }
+/* QSpinBox and QDoubleSpinBox Styling */
+QSpinBox, QDoubleSpinBox {
+    background-color: #3e3e3e;
+    color: white;
+    border: 2px solid #d34333;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 14px;
+}
+QSpinBox::up-button, QDoubleSpinBox::up-button {
+    background-color: #a68d8d;
+}
+QSpinBox::down-button, QDoubleSpinBox::down-button {
+    background-color: #a68d8d;
+}
 
-# /* QCheckBox Styling */
-# QCheckBox {
-#     font-size: 14px;
-#     color: white;
-# }
-# QCheckBox::indicator {
-#     border: 2px solid #d34333;
-#     width: 16px;
-#     height: 16px;
-# }
-# QCheckBox::indicator:checked {
-#     background-color: #d34333;
-#     border: 2px solid #d34333;
-# }
+/* QCheckBox Styling */
+QCheckBox {
+    font-size: 14px;
+    color: white;
+}
+QCheckBox::indicator {
+    border: 2px solid #d34333;
+    width: 16px;
+    height: 16px;
+}
+QCheckBox::indicator:checked {
+    background-color: #d34333;
+    border: 2px solid #d34333;
+}
 
-# /* QGroupBox Styling */
-# QGroupBox {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 1px solid #d34333;
-#     border-radius: 5px;
-#     margin-top: 10px;
-# }
-# QGroupBox::title {
-#     subcontrol-origin: margin;
-#     subcontrol-position: top left;
-#     padding: 0 5px;
-#     color: #d34333;
-#     font-weight: bold;
-# }
-# """
+/* QGroupBox Styling */
+QGroupBox {
+    background-color: #3e3e3e;
+    color: white;
+    border: 1px solid #d34333;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
+    color: #d34333;
+    font-weight: bold;
+}
+"""
 
 def main():
     app = QApplication(sys.argv)
