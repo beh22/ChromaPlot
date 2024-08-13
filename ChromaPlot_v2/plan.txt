@@ -1,0 +1,3 @@
+PLAN FOR CHROMAPLOT VERSION 2
+
+When data is loaded, they are added to a single

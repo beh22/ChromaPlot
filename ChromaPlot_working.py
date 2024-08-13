@@ -31,6 +31,9 @@ To do:
 - More complete error messages
 - Settings in dialogs should be remembered if closed and reopened again
 - Toggle legend location - between above and on plot
+- Add different tabs to options dialog
+- Sort stylesheet!
+- Copyright
 
 '''
 
@@ -332,15 +335,33 @@ class SingleMode(QDialog):
 
     def save_plot(self):
         if not self.is_data_loaded():
-            return        
+            return
+            
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(
+        file_name, selected_filter = QFileDialog.getSaveFileName(
             self, "Save Plot", "", 
-            "PDF Files (*pdf);;PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)", 
+            "PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)", 
             options=options
         )
+
         if file_name:
+            # Determine the correct file extension based on the selected filter
+            if selected_filter == "PDF Files (*.pdf)":
+                extension = ".pdf"
+            elif selected_filter == "PNG Files (*.png)":
+                extension = ".png"
+            elif selected_filter == "JPEG Files (*.jpg)":
+                extension = ".jpg"
+            else:
+                extension = ""
+
+            # If the file name does not already end with the correct extension, append it
+            if not file_name.lower().endswith(extension):
+                file_name += extension
+
+            # Save the figure using the determined file name and extension
             self.figure.savefig(file_name)
+
             QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
 
     def close_dialog(self):
@@ -989,6 +1010,12 @@ class OverlayMode(QDialog):
         self.select_curves_button.clicked.connect(self.open_select_curves_dialog)
         self.back_button.clicked.connect(self.close_dialog)
 
+    def is_data_loaded(self):
+        if self.data is None:
+            QMessageBox.warning(self, "No Data Loaded", "Please load data before using this option.")
+            return False
+        return True
+
     def load_data(self):
         # Load data and open select curves dialog
         options = QFileDialog.Options()
@@ -1137,17 +1164,34 @@ class OverlayMode(QDialog):
         print("All data and settings cleared.")
 
     def save_plot(self):
-        if not self.loaded_datasets:
-            QMessageBox.warning(self, "No Data Loaded", "Please load data before saving the plot")
+        if not self.is_data_loaded():
             return
+            
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(
-            self, "Save Plot", "",
-            "PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
+        file_name, selected_filter = QFileDialog.getSaveFileName(
+            self, "Save Plot", "", 
+            "PDF Files (*.pdf);;PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)", 
             options=options
         )
+
         if file_name:
+            # Determine the correct file extension based on the selected filter
+            if selected_filter == "PDF Files (*.pdf)":
+                extension = ".pdf"
+            elif selected_filter == "PNG Files (*.png)":
+                extension = ".png"
+            elif selected_filter == "JPEG Files (*.jpg)":
+                extension = ".jpg"
+            else:
+                extension = ""
+
+            # If the file name does not already end with the correct extension, append it
+            if not file_name.lower().endswith(extension):
+                file_name += extension
+
+            # Save the figure using the determined file name and extension
             self.figure.savefig(file_name)
+
             QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
 
     def close_dialog(self):
@@ -1450,56 +1494,130 @@ class MainWindow(QMainWindow):
         self.hide()
         self.overlay_mode_dialog.exec_()
 
-global_stylesheet = """
-QMainWindow {
-    background-color: #3e3e3e;
-}
+# global_stylesheet = """
+# /* General background and text color for all widgets */
+# QMainWindow, QDialog, QWidget {
+#     background-color: #3e3e3e;
+#     color: white;
+# }
 
-QDialog {
-    background-color: #3e3e3e;
-}
+# /* QPushButton Styling */
+# QPushButton {
+#     background-color: #a68d8d;
+#     color: white;
+#     font-size: 14px;
+#     font-weight: bold;
+#     border: 1px solid #d34333;
+#     padding: 8px 16px;
+#     border-radius: 4px;
+#     transition: background-color 0.3s ease;
+# }
+# QPushButton:hover {
+#     background-color: #d34333;
+# }
+# QPushButton:pressed {
+#     background-color: #8b5c5c;
+# }
 
-QPushButton {
-    background-color: #a68d8d; 
-    color: #d34333;
-    font-size: 14px;
-    font-weight: bold;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-}
-QPushButton:hover {
-    background-color: #45a049;
-}
-QPushButton:pressed {
-    background-color: #3e8e41;
-}
+# /* QLabel Styling */
+# QLabel {
+#     font-size: 14px;
+#     color: white;
+# }
 
-QLabel#welcome_label {
-    color: #2E86C1;
-    font-weight: bold;
-    font-size: 18px;
-}
+# QLabel#welcome_label {
+#     font-weight: bold;
+#     font-size: 20px;
+#     color: #d34333;
+# }
 
-QLabel#description_label {
-    color: #5D6D7E;
-    font-size: 14px;
-}
+# QLabel#description_label {
+#     font-size: 16px;
+#     color: white;
+# }
 
-QLineEdit {
-    border: 2px solid #2E86C1;
-    border-radius: 5px;
-    padding: 5px;
-    font-size: 14px;
-}
-QLineEdit:focus {
-    border-color: #4CAF50;
-}
-"""
+# /* QLineEdit Styling */
+# QLineEdit {
+#     background-color: #3e3e3e;
+#     color: white;
+#     border: 2px solid #d34333;
+#     border-radius: 5px;
+#     padding: 5px;
+#     font-size: 14px;
+# }
+# QLineEdit:focus {
+#     border-color: #a68d8d;
+# }
+
+# /* QComboBox Styling */
+# QComboBox {
+#     background-color: #3e3e3e;
+#     color: white;
+#     border: 2px solid #d34333;
+#     padding: 5px;
+#     font-size: 14px;
+#     border-radius: 5px;
+# }
+# QComboBox::drop-down {
+#     border-left: 2px solid #d34333;
+# }
+# QComboBox QAbstractItemView {
+#     background-color: #3e3e3e;
+#     color: white;
+#     selection-background-color: #a68d8d;
+# }
+
+# /* QSpinBox and QDoubleSpinBox Styling */
+# QSpinBox, QDoubleSpinBox {
+#     background-color: #3e3e3e;
+#     color: white;
+#     border: 2px solid #d34333;
+#     border-radius: 5px;
+#     padding: 5px;
+#     font-size: 14px;
+# }
+# QSpinBox::up-button, QDoubleSpinBox::up-button {
+#     background-color: #a68d8d;
+# }
+# QSpinBox::down-button, QDoubleSpinBox::down-button {
+#     background-color: #a68d8d;
+# }
+
+# /* QCheckBox Styling */
+# QCheckBox {
+#     font-size: 14px;
+#     color: white;
+# }
+# QCheckBox::indicator {
+#     border: 2px solid #d34333;
+#     width: 16px;
+#     height: 16px;
+# }
+# QCheckBox::indicator:checked {
+#     background-color: #d34333;
+#     border: 2px solid #d34333;
+# }
+
+# /* QGroupBox Styling */
+# QGroupBox {
+#     background-color: #3e3e3e;
+#     color: white;
+#     border: 1px solid #d34333;
+#     border-radius: 5px;
+#     margin-top: 10px;
+# }
+# QGroupBox::title {
+#     subcontrol-origin: margin;
+#     subcontrol-position: top left;
+#     padding: 0 5px;
+#     color: #d34333;
+#     font-weight: bold;
+# }
+# """
 
 def main():
     app = QApplication(sys.argv)
-    app.setStyleSheet(global_stylesheet)
+    # app.setStyleSheet(global_stylesheet)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
