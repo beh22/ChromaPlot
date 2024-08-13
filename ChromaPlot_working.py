@@ -1,3 +1,11 @@
+'''
+ChromaPlot Version 1.0
+Authors: Billy Hobbs and Felipe Ossa
+© 2024 Billy Hobbs. All rights reserved.
+'''
+
+version = '1.0'
+
 import sys
 import os
 import AKdatafile as AKdf
@@ -30,8 +38,6 @@ To do:
 - Sheeps
 - Change fonts?
 - More complete error messages
-- Settings in dialogs should be remembered if closed and reopened again
-- Toggle legend location - between above and on plot
 - Add different tabs to options dialog
 - Sort stylesheet!
 - Copyright
@@ -552,11 +558,13 @@ class SelectCurvesDialog(QDialog):
 
         self.setLayout(self.main_layout)
 
+        self.update_controls()
+
     def setup_uv_controls(self):
         # Add linestyle options for UV
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
-        linestyle_combo.setCurrentIndex(0)
+        linestyle_combo.setCurrentText(self.parent.selected_curves['UV'].get('linestyle', '-'))
         linestyle_combo.setFixedWidth(50)
         linestyle_combo.currentIndexChanged.connect(lambda index, c='UV': self.handle_linestyle_change(c)(index))
 
@@ -564,13 +572,14 @@ class SelectCurvesDialog(QDialog):
         linewidth_box = QDoubleSpinBox()
         linewidth_box.setRange(0.5, 5.0)
         linewidth_box.setSingleStep(0.5)
-        linewidth_box.setValue(1.5)
+        linewidth_box.setValue(self.parent.selected_curves['UV'].get('linewidth', 1.5))
         linewidth_box.setFixedWidth(50)
         linewidth_box.valueChanged.connect(lambda value, c='UV': self.handle_linewidth_change(c)(value))
 
         # Add custom y-label input for UV
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
+        ylabel_edit.setText(self.parent.selected_curves['UV'].get('ylabel', 'UV (mAU)'))
         ylabel_edit.editingFinished.connect(lambda c='UV': self.handle_ylabel_change(c, ylabel_edit.text()))
 
         # Add color picker for UV
@@ -580,7 +589,7 @@ class SelectCurvesDialog(QDialog):
         # Add label input for UV
         label_input = QLineEdit()
         label_input.setPlaceholderText("Legend Label")
-        # label_input.setText("UV")
+        label_input.setText(self.parent.selected_curves['UV'].get('label', 'UV'))
         label_input.editingFinished.connect(lambda: self.handle_label_change('UV', label_input.text()))
 
         # Layout for UV controls
@@ -588,29 +597,24 @@ class SelectCurvesDialog(QDialog):
         uv_layout.addWidget(QLabel('UV:'))
         uv_layout.addWidget(linestyle_combo)
         uv_layout.addWidget(linewidth_box)
-        uv_layout.addWidget(color_button)        
+        uv_layout.addWidget(color_button)
         uv_layout.addWidget(ylabel_edit)
         uv_layout.addWidget(label_input)
         self.main_layout.addLayout(uv_layout)
 
         # Initialize UV curve options
-        self.curve_options['UV'] = {
-            'linestyle': '-',
-            'linewidth': 1.5,
-            'ylabel': 'UV (mAU)',
-            'color': 'black',
-            'label': 'UV'
-            }
+        self.curve_options['UV'] = self.parent.selected_curves['UV']
 
     def setup_curve_controls(self, curve):
         checkbox = QCheckBox(curve)
-        checkbox.setChecked(False)
+        checkbox.setChecked(curve in self.parent.selected_curves)
         checkbox.stateChanged.connect(self.update_curve_selection)
+        self.checkboxes[curve] = checkbox
 
         # Add linestyle options
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
-        linestyle_combo.setCurrentIndex(0)
+        linestyle_combo.setCurrentText(self.parent.selected_curves.get(curve, {}).get('linestyle', '-'))
         linestyle_combo.setFixedWidth(50)
         linestyle_combo.currentIndexChanged.connect(lambda index, c=curve: self.handle_linestyle_change(c)(index))
 
@@ -618,13 +622,14 @@ class SelectCurvesDialog(QDialog):
         linewidth_box = QDoubleSpinBox()
         linewidth_box.setRange(0.5, 5.0)
         linewidth_box.setSingleStep(0.5)
-        linewidth_box.setValue(1.5)
+        linewidth_box.setValue(self.parent.selected_curves.get(curve, {}).get('linewidth', 1.5))
         linewidth_box.setFixedWidth(50)
         linewidth_box.valueChanged.connect(lambda value, c=curve: self.handle_linewidth_change(c)(value))
 
         # Add custom y-label input for curve
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
+        ylabel_edit.setText(self.parent.selected_curves.get(curve, {}).get('ylabel', curve))
         ylabel_edit.editingFinished.connect(lambda c=curve: self.handle_ylabel_change(c, ylabel_edit.text()))
 
         # Add color picker button
@@ -634,27 +639,27 @@ class SelectCurvesDialog(QDialog):
         # Add label input for the curve
         label_input = QLineEdit()
         label_input.setPlaceholderText("Legend Label")
-        # label_input.setText(curve)  # Default label is the curve's name
+        label_input.setText(self.parent.selected_curves.get(curve, {}).get('label', curve))
         label_input.editingFinished.connect(lambda: self.handle_label_change(curve, label_input.text()))
 
         # Layout for the curve options
-        hbox = QHBoxLayout()
-        hbox.addWidget(checkbox)
-        hbox.addWidget(linestyle_combo)
-        hbox.addWidget(linewidth_box)
-        hbox.addWidget(color_button)
-        hbox.addWidget(ylabel_edit)
-        hbox.addWidget(label_input)
+        curve_layout = QHBoxLayout()
+        curve_layout.addWidget(checkbox)
+        curve_layout.addWidget(linestyle_combo)
+        curve_layout.addWidget(linewidth_box)
+        curve_layout.addWidget(color_button)
+        curve_layout.addWidget(ylabel_edit)
+        curve_layout.addWidget(label_input)
 
-        self.main_layout.addLayout(hbox)
-        self.checkboxes[curve] = checkbox
-        self.curve_options[curve] = {
+        self.main_layout.addLayout(curve_layout)
+
+        self.curve_options[curve] = self.parent.selected_curves.get(curve, {
             'linestyle': '-',
             'linewidth': 1.5,
             'ylabel': curve,
             'color': 'black',
             'label': curve
-            }
+        })
 
     def handle_linestyle_change(self, curve):
         def inner_handle_linestyle_change(index):
@@ -701,6 +706,13 @@ class SelectCurvesDialog(QDialog):
 
         self.curveOptionsChanged.emit(selected_curves)
 
+    def update_controls(self):
+        """Update the state of controls based on the current settings in the parent."""
+        for curve, options in self.parent.selected_curves.items():
+            if curve in self.checkboxes:
+                self.checkboxes[curve].setChecked(True)
+                self.curve_options[curve] = options
+
 
 class OptionsDialog(QDialog):
     legendToggled = pyqtSignal(bool)
@@ -728,7 +740,7 @@ class OptionsDialog(QDialog):
 
         self.add_fraction_labels_checkbox = QCheckBox("Add fraction labels")
         self.add_legend_checkbox = QCheckBox("Add Legend")
-        self.add_legend_checkbox.setChecked(False)  # Legend off by default
+        self.add_legend_checkbox.setChecked(parent.show_legend)
 
         self.add_fraction_labels_checkbox.stateChanged.connect(self.toggle_fraction_labels)
         self.add_legend_checkbox.stateChanged.connect(self.toggle_legend)
@@ -736,7 +748,10 @@ class OptionsDialog(QDialog):
         self.legend_location_group = QButtonGroup(self)
         self.legend_above_radio = QRadioButton("Above Plot")
         self.legend_best_radio = QRadioButton("Best Location")
-        self.legend_above_radio.setChecked(True)
+        if parent.legend_location == 'best':
+            self.legend_best_radio.setChecked(True)
+        else:
+            self.legend_above_radio.setChecked(True)
 
         self.legend_location_group.addButton(self.legend_above_radio)
         self.legend_location_group.addButton(self.legend_best_radio)
@@ -857,6 +872,8 @@ class OptionsDialog(QDialog):
 
         self.update_shading_mode()
 
+        self.update_controls()
+
     def _create_bold_font(self, size):
         bold_font = QFont()
         bold_font.setBold(True)
@@ -954,6 +971,21 @@ class OptionsDialog(QDialog):
         self.add_fraction_labels_checkbox.setChecked(options.get('Add fraction labels', False))
         self.add_legend_checkbox.setChecked(options.get('Add Legend', False))
 
+    def update_controls(self):
+        """Update the state of controls based on the current settings in the parent."""
+        self.add_legend_checkbox.setChecked(self.parent().show_legend)
+        if self.parent().legend_location == 'best':
+            self.legend_best_radio.setChecked(True)
+        else:
+            self.legend_above_radio.setChecked(True)
+
+        self.add_fraction_labels_checkbox.setChecked(self.parent().show_fraction_labels)
+
+        self.xmin_input.setText(str(self.parent().xmin) if self.parent().xmin is not None else '')
+        self.xmax_input.setText(str(self.parent().xmax) if self.parent().xmax is not None else '')
+        self.ymin_input.setText(str(self.parent().ymin) if self.parent().ymin is not None else '')
+        self.ymax_input.setText(str(self.parent().ymax) if self.parent().ymax is not None else '')
+
 
 class AnalyseDialog(QDialog):
     def __init__(self, parent=None):
@@ -994,6 +1026,8 @@ class OverlayMode(QDialog):
         self.xmax = None
         self.ymin = None
         self.ymax = None
+
+        self.y_label = "UV (mAU)"
 
         self.show_legend = False  
 
@@ -1109,6 +1143,7 @@ class OverlayMode(QDialog):
         self.options_dialog.resetXLimits.connect(self.reset_x_limits)
         self.options_dialog.resetYLimits.connect(self.reset_y_limits)        
         self.options_dialog.legendToggled.connect(self.toggle_legend)
+        self.options_dialog.yLabelChanged.connect(self.set_y_label)
 
     def update_plot(self):
         self.figure.clear()
@@ -1117,38 +1152,46 @@ class OverlayMode(QDialog):
         handles = []
         labels = []
 
-        for dataset_name, data in self.loaded_datasets.items():
-            settings = self.plot_settings[dataset_name]
-            curvekeys = list(data['UV'].keys())
-            x = np.array(data['UV'][curvekeys[0]])
-            y = np.array(data['UV'][curvekeys[1]])
+        if self.plot_settings:
+            for dataset_name, settings in self.plot_settings.items():
+                data = self.loaded_datasets.get(dataset_name)
+                if data:
+                    curvekeys = list(data['UV'].keys())
+                    x = np.array(data['UV'][curvekeys[0]])
+                    y = np.array(data['UV'][curvekeys[1]])
 
-            line, = ax.plot(
-                x, y, label=settings['label'],
-                color=settings['color'],
-                linestyle=settings['linestyle'],
-                linewidth=settings['linewidth']
-            )
-            handles.append(line)
-            labels.append(settings['label'])
+                    line, = ax.plot(
+                        x, y, label=settings['label'],
+                        color=settings['color'],
+                        linestyle=settings['linestyle'],
+                        linewidth=settings['linewidth']
+                    )
+                    handles.append(line)
+                    labels.append(settings['label'])
 
-        # Apply custom limits if set
+        else:
+            # If no datasets are selected, just plot empty axes with the set limits
+            ax.plot([], [])  # Empty plot
+
         if self.xmin is not None or self.xmax is not None:
             ax.set_xlim(left=self.xmin, right=self.xmax)
-        else:
-            ax.set_xlim(left=0, right=max(x))
 
         if self.ymin is not None or self.ymax is not None:
             ax.set_ylim(bottom=self.ymin, top=self.ymax)
 
         ax.set_xlabel('Volume (mL)')
-        ax.set_ylabel('UV (mAU)')
+        ax.set_ylabel(self.y_label)
 
-        if self.show_legend:
+        if self.show_legend and handles:
             ax.legend(handles=handles, labels=labels)
 
         plt.tight_layout()
         self.canvas.draw()
+
+    def set_y_label(self, label):
+        if label:
+            self.y_label = label
+        self.update_plot()
 
     def set_x_limits(self, xmin, xmax):
         self.xmin = xmin
@@ -1255,25 +1298,32 @@ class OverlaySelectCurvesDialog(QDialog):
 
         self.setLayout(self.main_layout)
 
+        self.update_controls()
+
     def setup_curve_controls(self, dataset_name):
-        settings = self.plot_settings[dataset_name]
+        settings = self.plot_settings.get(dataset_name, {
+            'linestyle': '-',
+            'linewidth': 1.5,
+            'label': dataset_name,
+            'color': 'black'
+        })
 
         checkbox = QCheckBox(dataset_name)
-        checkbox.setChecked(True)
-        checkbox.stateChanged.connect(self.update_curve_options)
+        checkbox.setChecked(dataset_name in self.plot_settings)
+        checkbox.stateChanged.connect(lambda state, name=dataset_name: self.handle_checkbox_change(name, state))
 
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
-        linestyle_combo.setCurrentIndex(0)
+        linestyle_combo.setCurrentIndex(['-', '--', '-.', ':'].index(settings.get('linestyle', '-')))
         linestyle_combo.currentIndexChanged.connect(lambda index: self.handle_linestyle_change(dataset_name, index))
 
         linewidth_box = QDoubleSpinBox()
         linewidth_box.setRange(0.5, 5.0)
         linewidth_box.setSingleStep(0.5)
-        linewidth_box.setValue(1.5)
+        linewidth_box.setValue(settings.get('linewidth', 1.5))
         linewidth_box.valueChanged.connect(lambda value: self.handle_linewidth_change(dataset_name, value))
 
-        ylabel_edit = QLineEdit(settings['label'])
+        ylabel_edit = QLineEdit(settings.get('label', dataset_name))
         ylabel_edit.setPlaceholderText("Legend Label")
         ylabel_edit.editingFinished.connect(lambda: self.handle_label_change(dataset_name, ylabel_edit.text()))
 
@@ -1289,30 +1339,69 @@ class OverlaySelectCurvesDialog(QDialog):
         hbox.addWidget(linewidth_box)
         hbox.addWidget(ylabel_edit)
         hbox.addWidget(color_button)
-        hbox.addWidget(clear_button)
+        # hbox.addWidget(clear_button)
 
         self.main_layout.addLayout(hbox)
+
+    def handle_checkbox_change(self, dataset_name, state):
+        if state == Qt.Checked:
+            if dataset_name not in self.plot_settings:
+                self.plot_settings[dataset_name] = {
+                    'linestyle': '-',
+                    'linewidth': 1.5,
+                    'label': dataset_name,
+                    'color': 'black'
+                }
+        else:
+            if dataset_name in self.plot_settings:
+                del self.plot_settings[dataset_name]
+
+        self.curveOptionsChanged.emit()
+
+    def update_controls(self):
+        """Update dialog controls based on current settings."""
+        for dataset_name, settings in self.plot_settings.items():
+            checkbox = self.findChild(QCheckBox, dataset_name)
+            linestyle_combo = self.findChild(QComboBox, dataset_name + '_linestyle')
+            linewidth_box = self.findChild(QDoubleSpinBox, dataset_name + '_linewidth')
+            ylabel_edit = self.findChild(QLineEdit, dataset_name + '_ylabel')
+
+            if checkbox and dataset_name in self.datasets:
+                checkbox.setChecked(True)
+
+            if linestyle_combo:
+                linestyle_combo.setCurrentIndex(['-', '--', '-.', ':'].index(settings.get('linestyle', '-')))
+
+            if linewidth_box:
+                linewidth_box.setValue(settings.get('linewidth', 1.5))
+
+            if ylabel_edit:
+                ylabel_edit.setText(settings.get('label', dataset_name))
 
     def update_curve_options(self, state):
         self.curveOptionsChanged.emit()
 
     def handle_linestyle_change(self, dataset_name, index):
-        self.plot_settings[dataset_name]['linestyle'] = ['-', '--', '-.', ':'][index]
-        self.curveOptionsChanged.emit()
+        if dataset_name in self.plot_settings:
+            self.plot_settings[dataset_name]['linestyle'] = ['-', '--', '-.', ':'][index]
+            self.curveOptionsChanged.emit()
 
     def handle_linewidth_change(self, dataset_name, value):
-        self.plot_settings[dataset_name]['linewidth'] = value
-        self.curveOptionsChanged.emit()
+        if dataset_name in self.plot_settings:
+            self.plot_settings[dataset_name]['linewidth'] = value
+            self.curveOptionsChanged.emit()
 
     def handle_label_change(self, dataset_name, label):
-        self.plot_settings[dataset_name]['label'] = label
-        self.curveOptionsChanged.emit()
+        if dataset_name in self.plot_settings:
+            self.plot_settings[dataset_name]['label'] = label
+            self.curveOptionsChanged.emit()
 
     def handle_color_change(self, dataset_name):
-        color = QColorDialog.getColor(Qt.black, self, "Select Color for " + dataset_name)
-        if color.isValid():
-            self.plot_settings[dataset_name]['color'] = color.name()
-            self.curveOptionsChanged.emit()
+        if dataset_name in self.plot_settings:
+            color = QColorDialog.getColor(Qt.black, self, "Select Color for " + dataset_name)
+            if color.isValid():
+                self.plot_settings[dataset_name]['color'] = color.name()
+                self.curveOptionsChanged.emit()
 
     def clear_curve_data(self, dataset_name):
         del self.datasets[dataset_name]
@@ -1322,6 +1411,7 @@ class OverlaySelectCurvesDialog(QDialog):
 
 class OverlayOptionsDialog(QDialog):
     legendToggled = pyqtSignal(bool)
+    yLabelChanged = pyqtSignal(str)
     xLimitChanged = pyqtSignal(float, float)
     yLimitChanged = pyqtSignal(float, float)
     resetXLimits = pyqtSignal()
@@ -1335,7 +1425,7 @@ class OverlayOptionsDialog(QDialog):
 
         options_label = QLabel("Options")
         options_label.setFont(self._create_bold_font(16))
-        self.layout.addWidget(options_label)        
+        self.layout.addWidget(options_label)
 
         self.add_legend_checkbox = QCheckBox("Add Legend")
         self.add_legend_checkbox.setChecked(False)
@@ -1350,7 +1440,7 @@ class OverlayOptionsDialog(QDialog):
         self.xmax_input = QLineEdit()
         self.xmin_input.setPlaceholderText("Min X")
         self.xmax_input.setPlaceholderText("Max X")
-        
+
         x_axis_input_layout.addWidget(self.xmin_input)
         x_axis_input_layout.addWidget(self.xmax_input)
 
@@ -1359,7 +1449,7 @@ class OverlayOptionsDialog(QDialog):
         self.apply_x_button.clicked.connect(self.apply_x_limits)
         self.reset_x_button = QPushButton("Reset")
         self.reset_x_button.clicked.connect(self.reset_x_limits)
-        
+
         x_axis_button_layout.addWidget(self.apply_x_button)
         x_axis_button_layout.addWidget(self.reset_x_button)
 
@@ -1369,7 +1459,7 @@ class OverlayOptionsDialog(QDialog):
         self.ymax_input = QLineEdit()
         self.ymin_input.setPlaceholderText("Min Y")
         self.ymax_input.setPlaceholderText("Max Y")
-        
+
         y_axis_input_layout.addWidget(self.ymin_input)
         y_axis_input_layout.addWidget(self.ymax_input)
 
@@ -1378,14 +1468,25 @@ class OverlayOptionsDialog(QDialog):
         self.apply_y_button.clicked.connect(self.apply_y_limits)
         self.reset_y_button = QPushButton("Reset")
         self.reset_y_button.clicked.connect(self.reset_y_limits)
-        
+
         y_axis_button_layout.addWidget(self.apply_y_button)
         y_axis_button_layout.addWidget(self.reset_y_button)
 
+        # Custom Y-Label input
+        ylabel_label = QLabel("Y-axis label:")
+        self.ylabel_input = QLineEdit()
+        self.ylabel_input.setPlaceholderText("UV (mAU)")
+        self.ylabel_input.setText(self.parent().y_label)  # Initialize with the current label
+        self.ylabel_input.editingFinished.connect(self.apply_y_label)
+
         # Add widgets to the main layout
         self.layout.addWidget(self.add_legend_checkbox)
+
+        self.layout.addWidget(ylabel_label)
+        self.layout.addWidget(self.ylabel_input)
+
         self.layout.addWidget(limits_label)
-        
+
         self.layout.addWidget(QLabel("X-axis limits:"))
         self.layout.addLayout(x_axis_input_layout)
         self.layout.addLayout(x_axis_button_layout)
@@ -1396,11 +1497,21 @@ class OverlayOptionsDialog(QDialog):
 
         self.setLayout(self.layout)
 
+        self.update_controls()
+
     def _create_bold_font(self, size):
         font = QFont()
         font.setBold(True)
         font.setPointSize(size)
         return font
+
+    def update_controls(self):
+        """Update dialog controls based on current settings."""
+        self.add_legend_checkbox.setChecked(self.parent().show_legend)
+        self.xmin_input.setText(str(self.parent().xmin) if self.parent().xmin is not None else '')
+        self.xmax_input.setText(str(self.parent().xmax) if self.parent().xmax is not None else '')
+        self.ymin_input.setText(str(self.parent().ymin) if self.parent().ymin is not None else '')
+        self.ymax_input.setText(str(self.parent().ymax) if self.parent().ymax is not None else '')
 
     def toggle_legend(self, state):
         self.legendToggled.emit(state == Qt.Checked)
@@ -1421,6 +1532,10 @@ class OverlayOptionsDialog(QDialog):
         except ValueError:
             QMessageBox.warning(self, "Invalid Input", "Please enter valid numerical values for Y-axis limits.")
 
+    def apply_y_label(self):
+        ylabel = self.ylabel_input.text().strip()
+        self.yLabelChanged.emit(ylabel)
+
     def reset_x_limits(self):
         self.resetXLimits.emit()
 
@@ -1430,7 +1545,7 @@ class OverlayOptionsDialog(QDialog):
 
 ########## Main window ##########
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, version):
         super().__init__()
 
         self.setWindowTitle("ChromaPlot")
@@ -1452,7 +1567,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(logo_label)
 
         # Add a welcome message
-        welcome_label = QLabel("Welcome to ChromaPlot (Beta (13/8/24))")
+        welcome_label = QLabel(f"Welcome to ChromaPlot (Version {version})")
         welcome_label.setAlignment(Qt.AlignCenter)
         welcome_label.setFont(QFont("Arial", 16, QFont.Bold))
         main_layout.addWidget(welcome_label)
@@ -1509,6 +1624,14 @@ class MainWindow(QMainWindow):
         github_link.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(github_link)
 
+        # Add a copyright label at the bottom
+        copyright_label = QLabel("© 2024 Billy Hobbs. All rights reserved.")
+        copyright_label.setAlignment(Qt.AlignCenter)
+        copyright_label.setStyleSheet("font-size: 10px; color: grey;")
+
+        # Add copyright label to the main layout
+        main_layout.addWidget(copyright_label)        
+
         # Set the layout to a central widget
         container = QWidget()
         container.setLayout(main_layout)
@@ -1532,6 +1655,7 @@ class MainWindow(QMainWindow):
         self.overlay_mode_dialog = OverlayMode(self)
         self.hide()
         self.overlay_mode_dialog.exec_()
+
 
 global_stylesheet = """
 /* General background and text color for all widgets */
@@ -1654,10 +1778,11 @@ QGroupBox::title {
 }
 """
 
+
 def main():
     app = QApplication(sys.argv)
     # app.setStyleSheet(global_stylesheet)
-    window = MainWindow()
+    window = MainWindow(version)
     window.show()
     sys.exit(app.exec_())
 
