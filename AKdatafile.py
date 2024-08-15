@@ -90,6 +90,7 @@ class AKdatafile:
             self.colnocheck.append(cc)
         self.cc = self.colnocheck.count(self.colnocheck[0]) == len(self.colnocheck)
         self.ce = all(self.colnoerror)
+        # print([odict.keys()][0])
         # These lines should fix loading in data from the purple akta, but currently cause more problems than they solve
         # uvkey = [x for x in odict.keys() if 'UV' in x] 
         # odict['UV'] = odict[uvkey[0]]

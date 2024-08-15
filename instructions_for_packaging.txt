@@ -6,7 +6,7 @@ Make sure pyinstaller and create-dmg are installed:
 
 rm -r build/ dist/ *spec
 
-pyinstaller --windowed --noconfirm --name="ChromaPlot" --icon="cp_thumbnail.icns" --add-data="cp_logo.jpg:." ChromaPlot_beta.py
+pyinstaller --windowed --noconfirm --name="ChromaPlot" --icon="cp_thumbnail.png" --add-data="cp_logo.jpg:." ChromaPlot_beta.py
 
 Run ./create_dmg.com
 
