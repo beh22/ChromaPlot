@@ -12,7 +12,7 @@ import AKdatafile as AKdf
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
     QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit, QColorDialog, QComboBox, QDoubleSpinBox,
-    QButtonGroup, QRadioButton
+    QButtonGroup, QRadioButton, QFrame
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QPixmap
@@ -99,9 +99,17 @@ class SingleMode(QDialog):
         self.figure = plt.figure(figsize=(7,3.5))
         self.canvas = FigureCanvas(self.figure)
 
-        # Add the canvas and checkbox layout to the side layout
+        frame = QFrame()
+        frame.setObjectName("plotFrame")
+
+        plot_layout = QVBoxLayout()
+        plot_layout.setContentsMargins(0,0,0,0)
+        plot_layout.setSpacing(0)
+        plot_layout.addWidget(self.canvas)
+        frame.setLayout(plot_layout)        
+
         self.side_layout.addLayout(self.checkbox_layout)
-        self.side_layout.addWidget(self.canvas)
+        self.side_layout.addWidget(frame)
 
         # Add the button layout and side layout to the main layout
         self.main_layout.addLayout(self.button_layout)
@@ -191,6 +199,7 @@ class SingleMode(QDialog):
         labels = []
 
         # Plot UV curve separately with its own customization options
+        # if 'UV' in self.data:
         keys = [x for x in self.data.keys()]
         uv_options = self.selected_curves.get('UV', {
             'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'UV (mAU)', 'label': 'UV'
@@ -219,36 +228,43 @@ class SingleMode(QDialog):
 
         # Plot selected curves with customization options
         y_axes = [ax]
+        print(len(y_axes))
 
         for i, (curve, options) in enumerate(self.selected_curves.items()):
-            # if curve != 'UV' and curve in self.data:
-            linestyle = options.get('linestyle', '-')
-            linewidth = options.get('linewidth', 1.5)
-            color = options.get('color', self.colors[i % len(self.colors)])
-            ylabel = options.get('ylabel', curve)
-            label = options.get('label', curve)
+            if curve != 'UV' and curve in self.data:
+                linestyle = options.get('linestyle', '-')
+                linewidth = options.get('linewidth', 1.5)
+                color = options.get('color', self.colors[i % len(self.colors)])
+                ylabel = options.get('ylabel', curve)
+                label = options.get('label', curve)
 
-            curvekeys = list(self.data[curve].keys())
-            x = np.array(self.data[curve][curvekeys[0]])
-            y = np.array(self.data[curve][curvekeys[1]])
+                curvekeys = list(self.data[curve].keys())
+                x = np.array(self.data[curve][curvekeys[0]])
+                y = np.array(self.data[curve][curvekeys[1]])
 
-            if len(y_axes) == 1:
-                new_ax = ax.twinx()
-                y_axes.append(new_ax)
-            elif len(y_axes) > 1:
-                new_ax = ax.twinx()
-                new_ax.spines['right'].set_position(('outward', 40 * len(y_axes)))
-                y_axes.append(new_ax)
+                if len(y_axes) == 1:
+                    new_ax = ax.twinx()
+                    y_axes.append(new_ax)
+                elif len(y_axes) == 2:
+                    new_ax = ax.twinx()
+                    new_ax.spines['right'].set_position(('outward', 25 * len(y_axes)))
+                    y_axes.append(new_ax)
+                elif len(y_axes) > 2:
+                    new_ax = ax.twinx()
+                    new_ax.spines['right'].set_position(('outward', 40 * len(y_axes)))
+                    y_axes.append(new_ax)
 
-            try:
-                line, = new_ax.plot(x, y, label=label, color=color, linestyle=linestyle, linewidth=linewidth)
-            except Exception as e:
-                print("Error plotting curve:", e)
-            new_ax.set_ylabel(ylabel, color=color)
-            new_ax.tick_params(axis='y', labelcolor=color)
+                print(len(y_axes))                    
 
-            handles.append(line)
-            labels.append(label)
+                try:
+                    line, = new_ax.plot(x, y, label=label, color=color, linestyle=linestyle, linewidth=linewidth)
+                except Exception as e:
+                    print("Error plotting curve:", e)
+                new_ax.set_ylabel(ylabel, color=color)
+                new_ax.tick_params(axis='y', labelcolor=color)
+
+                handles.append(line)
+                labels.append(label)
 
         ax.set_xlabel('Volume (mL)')
 
@@ -1060,8 +1076,16 @@ class OverlayMode(QDialog):
         self.figure = plt.figure(figsize=(7, 3.5))
         self.canvas = FigureCanvas(self.figure)
 
-        # Add the canvas and checkbox layout to the side layout
-        self.side_layout.addWidget(self.canvas)
+        frame = QFrame()
+        frame.setObjectName("plotFrame")
+        
+        plot_layout = QVBoxLayout()
+        plot_layout.setContentsMargins(0,0,0,0)
+        plot_layout.setSpacing(0)
+        plot_layout.addWidget(self.canvas)
+        frame.setLayout(plot_layout)
+
+        self.side_layout.addWidget(frame)
 
         # Add the button layout and side layout to the main layout
         self.main_layout.addLayout(self.button_layout)
@@ -1551,14 +1575,12 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("ChromaPlot")
 
-        # self.setStyleSheet("background-color: #3e3e3e;")
-
         # Create the main layout
         main_layout = QVBoxLayout()
 
         # Add the logo
         logo_label = QLabel()
-        logo_path = self.resource_path("./logos/cp_logo.jpg")
+        logo_path = self.resource_path("./logos/cp_logo.png")
         logo_pixmap = QPixmap(logo_path)
         desired_width = 300
         desired_height = 150
@@ -1606,10 +1628,10 @@ class MainWindow(QMainWindow):
 
         # Add descriptions for the modes
         single_mode_description = QLabel(
-            "<b><span style='font-size:11pt'>Single Mode:</span></b> Create plots of single datasets. Add and remove traces, with customisable options."
+            "<b><span style='font-size:14pt'>Single Mode:</span></b> Create plots of single datasets. Add and remove traces, with customisable options."
         )
         overlay_mode_description = QLabel(
-            "<b><span style='font-size:11pt'>Overlay Mode:</span></b> Overlay and customise multiple datasets for easy comparison."
+            "<b><span style='font-size:14pt'>Overlay Mode:</span></b> Overlay and customise multiple datasets for easy comparison."
         )
         single_mode_description.setWordWrap(True)
         overlay_mode_description.setWordWrap(True)
@@ -1658,131 +1680,72 @@ class MainWindow(QMainWindow):
         self.overlay_mode_dialog.exec_()
 
 
-# global_stylesheet = """
-# /* General background and text color for all widgets */
-# QMainWindow, QDialog, QWidget {
-#     background-color: #3e3e3e;
-#     color: white;
-# }
+global_stylesheet = """
+QWidget {
+    background-color: #3e3e3e;
+}
 
-# /* QPushButton Styling */
-# QPushButton {
-#     background-color: #a68d8d;
-#     color: white;
-#     font-size: 14px;
-#     font-weight: bold;
-#     border: 1px solid #d34333;
-#     padding: 8px 16px;
-#     border-radius: 4px;
-#     transition: background-color 0.3s ease;
-# }
-# QPushButton:hover {
-#     background-color: #d34333;
-# }
-# QPushButton:pressed {
-#     background-color: #8b5c5c;
-# }
+QFrame#plotFrame {
+    border: 3px solid #d34333;
+    padding: 0px;
+    margin: 0px;
+    border-radius: 5px;
+}
 
-# /* QLabel Styling */
-# QLabel {
-#     font-size: 14px;
-#     color: white;
-# }
+QLabel {
+    color: white;
+}
 
-# QLabel#welcome_label {
-#     font-weight: bold;
-#     font-size: 20px;
-#     color: #d34333;
-# }
+QPushButton {
+    background-color: #7e7e7e;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 5px;
+}
 
-# QLabel#description_label {
-#     font-size: 16px;
-#     color: white;
-# }
+QPushButton:hover {
+    background-color: #d39333;
+}
 
-# /* QLineEdit Styling */
-# QLineEdit {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 2px solid #d34333;
-#     border-radius: 5px;
-#     padding: 5px;
-#     font-size: 14px;
-# }
-# QLineEdit:focus {
-#     border-color: #a68d8d;
-# }
+QLineEdit {
+    background-color: white;
+    color: black;
+    border: 2px solid #d34333;
+    padding: 5px;
+    border-radius: 5px;
+}
 
-# /* QComboBox Styling */
-# QComboBox {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 2px solid #d34333;
-#     padding: 5px;
-#     font-size: 14px;
-#     border-radius: 5px;
-# }
-# QComboBox::drop-down {
-#     border-left: 2px solid #d34333;
-# }
-# QComboBox QAbstractItemView {
-#     background-color: #3e3e3e;
-#     color: white;
-#     selection-background-color: #a68d8d;
-# }
+QComboBox {
+    background-color: white;
+    color: black;
+    border: 2px solid #d34333;
+    padding: 5px;
+    border-radius: 5px;
+}
 
-# /* QSpinBox and QDoubleSpinBox Styling */
-# QSpinBox, QDoubleSpinBox {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 2px solid #d34333;
-#     border-radius: 5px;
-#     padding: 5px;
-#     font-size: 14px;
-# }
-# QSpinBox::up-button, QDoubleSpinBox::up-button {
-#     background-color: #a68d8d;
-# }
-# QSpinBox::down-button, QDoubleSpinBox::down-button {
-#     background-color: #a68d8d;
-# }
+QCheckBox {
+    color: white;
+}
 
-# /* QCheckBox Styling */
-# QCheckBox {
-#     font-size: 14px;
-#     color: white;
-# }
-# QCheckBox::indicator {
-#     border: 2px solid #d34333;
-#     width: 16px;
-#     height: 16px;
-# }
-# QCheckBox::indicator:checked {
-#     background-color: #d34333;
-#     border: 2px solid #d34333;
-# }
+QDoubleSpinBox, QSpinBox {
+    background-color: white;
+    color: black;
+    border: 2px solid #d34333;
+    padding: 5px;
+    border-radius: 5px;
+}
 
-# /* QGroupBox Styling */
-# QGroupBox {
-#     background-color: #3e3e3e;
-#     color: white;
-#     border: 1px solid #d34333;
-#     border-radius: 5px;
-#     margin-top: 10px;
-# }
-# QGroupBox::title {
-#     subcontrol-origin: margin;
-#     subcontrol-position: top left;
-#     padding: 0 5px;
-#     color: #d34333;
-#     font-weight: bold;
-# }
-# """
+QRadioButton {
+    color: white;
+}
+
+"""
 
 
 def main():
     app = QApplication(sys.argv)
-    # app.setStyleSheet(global_stylesheet)
+    app.setStyleSheet(global_stylesheet)
     window = MainWindow(version)
     window.show()
     sys.exit(app.exec_())
