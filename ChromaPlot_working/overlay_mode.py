@@ -37,7 +37,8 @@ class OverlayMode(QDialog):
 
         self.y_label = "UV (mAU)"
 
-        self.show_legend = False  
+        self.show_legend = False
+        self.legend_location = 'best'
 
         self.select_curves_dialog = None
         self.options_dialog = None
@@ -162,6 +163,7 @@ class OverlayMode(QDialog):
         self.options_dialog.resetXLimits.connect(self.reset_x_limits)
         self.options_dialog.resetYLimits.connect(self.reset_y_limits)        
         self.options_dialog.legendToggled.connect(self.toggle_legend)
+        self.options_dialog.legendLocationChanged.connect(self.set_legend_location)
         self.options_dialog.yLabelChanged.connect(self.set_y_label)
 
     def update_plot(self):
@@ -202,7 +204,10 @@ class OverlayMode(QDialog):
         ax.set_ylabel(self.y_label)
 
         if self.show_legend and handles:
-            ax.legend(handles=handles, labels=labels)
+            if self.legend_location == 'upper center':
+                ax.legend(handles=handles, labels=labels, loc='upper center', bbox_to_anchor=(0.5, 1.12), ncol=10, fontsize=8)
+            else:
+                ax.legend(handles=handles, labels=labels, loc='best', fontsize=8)
 
         plt.tight_layout()
         self.canvas.draw()
@@ -236,6 +241,10 @@ class OverlayMode(QDialog):
         self.show_legend = visible
         self.update_plot()
 
+    def set_legend_location(self, location):
+        self.legend_location = location
+        self.update_plot()
+
     def clear_data(self):
         if self.select_curves_dialog:
             self.select_curves_dialog.close()
@@ -261,7 +270,7 @@ class OverlayMode(QDialog):
     def save_plot(self):
         if not self.is_data_loaded():
             return
-            
+
         options = QFileDialog.Options()
         file_name, selected_filter = QFileDialog.getSaveFileName(
             self, "Save Plot", "", 
@@ -436,6 +445,7 @@ class OverlaySelectCurvesDialog(QDialog):
 
 class OverlayOptionsDialog(QDialog):
     legendToggled = pyqtSignal(bool)
+    legendLocationChanged = pyqtSignal(str)
     yLabelChanged = pyqtSignal(str)
     xLimitChanged = pyqtSignal(float, float)
     yLimitChanged = pyqtSignal(float, float)
@@ -453,8 +463,29 @@ class OverlayOptionsDialog(QDialog):
         self.layout.addWidget(options_label)
 
         self.add_legend_checkbox = QCheckBox("Add Legend")
-        self.add_legend_checkbox.setChecked(False)
+        self.add_legend_checkbox.setChecked(parent.show_legend)
         self.add_legend_checkbox.stateChanged.connect(self.toggle_legend)
+
+        # Legend location radio buttons
+        self.legend_location_group = QButtonGroup(self)
+        self.legend_above_radio = QRadioButton("Above Plot")
+        self.legend_best_radio = QRadioButton("Best Location")
+        if parent.legend_location == 'best':
+            self.legend_best_radio.setChecked(True)
+        else:
+            self.legend_above_radio.setChecked(True)
+
+        self.legend_location_group.addButton(self.legend_above_radio)
+        self.legend_location_group.addButton(self.legend_best_radio)
+
+        self.legend_above_radio.toggled.connect(self.update_legend_location)
+
+        legend_layout = QHBoxLayout()
+        legend_layout.addWidget(self.add_legend_checkbox)
+        legend_layout.addWidget(self.legend_above_radio)
+        legend_layout.addWidget(self.legend_best_radio)
+
+        self.layout.addLayout(legend_layout)
 
         limits_label = QLabel("Define Limits")
         limits_label.setFont(self._create_bold_font(12))
@@ -505,8 +536,6 @@ class OverlayOptionsDialog(QDialog):
         self.ylabel_input.editingFinished.connect(self.apply_y_label)
 
         # Add widgets to the main layout
-        self.layout.addWidget(self.add_legend_checkbox)
-
         self.layout.addWidget(ylabel_label)
         self.layout.addWidget(self.ylabel_input)
 
@@ -533,6 +562,10 @@ class OverlayOptionsDialog(QDialog):
     def update_controls(self):
         """Update dialog controls based on current settings."""
         self.add_legend_checkbox.setChecked(self.parent().show_legend)
+        if self.parent().legend_location == 'best':
+            self.legend_best_radio.setChecked(True)
+        else:
+            self.legend_above_radio.setChecked(True)
         self.xmin_input.setText(str(self.parent().xmin) if self.parent().xmin is not None else '')
         self.xmax_input.setText(str(self.parent().xmax) if self.parent().xmax is not None else '')
         self.ymin_input.setText(str(self.parent().ymin) if self.parent().ymin is not None else '')
@@ -540,6 +573,12 @@ class OverlayOptionsDialog(QDialog):
 
     def toggle_legend(self, state):
         self.legendToggled.emit(state == Qt.Checked)
+
+    def update_legend_location(self):
+        if self.legend_above_radio.isChecked():
+            self.legendLocationChanged.emit('upper center')
+        else:
+            self.legendLocationChanged.emit('best')
 
     def apply_x_limits(self):
         try:

@@ -7,8 +7,7 @@ Authors: Billy Hobbs and Felipe Ossa
 from PyQt5.QtWidgets import (
      QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QLabel, QTabWidget
 )
-
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 import sys
@@ -18,11 +17,10 @@ class MainHelpDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("ChromaPlot Help")
-        self.setGeometry(100, 100, 400, 410)  # Set the size of the dialog
+        self.setGeometry(100, 100, 400, 410)
 
         layout = QVBoxLayout()
 
-        # Add the logo
         logo_label = QLabel()
         logo_path = self.resource_path("cp_logo.png")
         logo_pixmap = QPixmap(logo_path)
@@ -33,7 +31,6 @@ class MainHelpDialog(QDialog):
         logo_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(logo_label)
 
-        # Add the welcome message
         help_label = QLabel()
         help_label.setWordWrap(True)
         help_label.setText(

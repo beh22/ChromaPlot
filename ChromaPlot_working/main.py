@@ -23,11 +23,9 @@ To do:
 
 - Add option to pick which column is automatically plotted?
 
-- Fix alignments of boxes in select curves dialogs
-
 - Finish vertical marker
 - Search for updates
-- Help/instruction pages
+- Improve help page
 - Shading to overlay mode
 - Add toggle legend position to overlay mode
 
