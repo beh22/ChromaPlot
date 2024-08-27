@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(logo_label)
 
         # Add a welcome message
-        welcome_label = QLabel(f"Welcome to ChromaPlot (Version {version} 15/08/24)")
+        welcome_label = QLabel(f"Welcome to ChromaPlot (Version {version})")
         welcome_label.setAlignment(Qt.AlignCenter)
         welcome_label.setFont(QFont("Arial", 16, QFont.Bold))
         main_layout.addWidget(welcome_label)

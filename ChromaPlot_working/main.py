@@ -29,6 +29,10 @@ To do:
 - Search for updates
 - Help/instruction pages
 - Shading to overlay mode
+
+- Don't crash if there are no fractions
+
+- Shade fractions with silly numbering from 96 well fraction things
 '''
 
 
@@ -124,7 +128,7 @@ QRadioButton {
 """
 
 
-version = '1.0'
+version = '1.0.0'
 
 def main():
     app = QApplication(sys.argv)

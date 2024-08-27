@@ -1098,23 +1098,23 @@ class AnalyseDialog(QDialog):
 
     # This version works properly but is slow because the whole plot 
     # needs to be updated as the marker is moved
-    def update_marker_position(self, value):
-        if self.marker_line:
-            self.marker_line.set_xdata([value / 100, value / 100])
-            self.update_y_values(value / 100)
-            self.parent.update_marker_state(True, value / 100)  # Update the parent's marker state with the new position
-            self.parent.canvas.draw()
+    # def update_marker_position(self, value):
+    #     if self.marker_line:
+    #         self.marker_line.set_xdata([value / 100, value / 100])
+    #         self.update_y_values(value / 100)
+    #         self.parent.update_marker_state(True, value / 100)  # Update the parent's marker state with the new position
+    #         self.parent.canvas.draw()
 
     # This version is quicker, but messes up when other aspects of the plot is changed
     # Marker needs to be turned on and off again
-    # def update_marker_position(self, value):
-    #     if self.marker_line:
-    #         x_value = value / 100.0
-    #         # Update the marker line's position without redrawing the entire canvas
-    #         self.marker_line.set_xdata([x_value])
-    #         self.update_y_values(x_value)
-    #         # Only update the area where the marker is drawn instead of the entire plot
-    #         self.parent.canvas.draw_idle()
+    def update_marker_position(self, value):
+        if self.marker_line:
+            x_value = value / 100.0
+            # Update the marker line's position without redrawing the entire canvas
+            self.marker_line.set_xdata([x_value])
+            self.update_y_values(x_value)
+            # Only update the area where the marker is drawn instead of the entire plot
+            self.parent.canvas.draw_idle()
 
     def update_y_values(self, x_value):
         y_values = {}
