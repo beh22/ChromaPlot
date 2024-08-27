@@ -59,7 +59,7 @@ class SingleMode(QDialog):
         self.load_data_button = QPushButton("Load data")
         self.clear_data_button = QPushButton("Clear data")
         self.save_plot_button = QPushButton("Save plot")
-        self.options_button = QPushButton("Options")
+        self.options_button = QPushButton("Display options")
         self.select_curves_button = QPushButton("Select Curves")
         self.analyse_button = QPushButton("Analyse")
         self.back_button = QPushButton("Back")
@@ -315,7 +315,12 @@ class SingleMode(QDialog):
             f = self.data['Fraction']['ml']
             flab = self.data['Fraction']['Fraction']
         except KeyError:
-            raise KeyError('Fraction data does not seem to be present')
+            QMessageBox.warning(self, "Error", "Fraction data does not seem to be present.")
+            # raise KeyError('Fraction data does not seem to be present')
+
+            self.show_fraction_labels = False
+            self.options_dialog.add_fraction_labels_checkbox.setChecked(False) 
+            return
         
         for i in range(len(flab) - 1):
             flabx.append((f[i] + f[i+1]) / 2)

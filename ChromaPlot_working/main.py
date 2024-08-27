@@ -30,7 +30,7 @@ To do:
 - Help/instruction pages
 - Shading to overlay mode
 
-- Don't crash if there are no fractions
+- Don't crash if there are no fractions - sort of fixed
 
 - Shade fractions with silly numbering from 96 well fraction things
 '''

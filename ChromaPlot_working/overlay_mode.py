@@ -50,7 +50,7 @@ class OverlayMode(QDialog):
         self.load_data_button = QPushButton("Load data")
         self.clear_data_button = QPushButton("Clear data")
         self.save_plot_button = QPushButton("Save plot")
-        self.options_button = QPushButton("Options")
+        self.options_button = QPushButton("Display options")
         self.select_curves_button = QPushButton("Select Curves")
         self.back_button = QPushButton("Back")
 
