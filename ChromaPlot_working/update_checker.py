@@ -1,5 +1,5 @@
 '''
-ChromaPlot Version 1.0
+ChromaPlot Version 1.0.0
 Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
@@ -9,7 +9,7 @@ import sys
 from PyQt5.QtWidgets import QMessageBox
 
 CURRENT_VERSION = "1.0.0"
-GITHUB_API_URL = "https://api.github.com/repos/yourusername/yourrepository/releases/latest"
+GITHUB_API_URL = "https://api.github.com/repos/beh22/ChromaPlot/releases/latest"
 
 def check_for_updates():
     try:

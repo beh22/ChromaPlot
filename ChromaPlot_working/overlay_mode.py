@@ -1,5 +1,5 @@
 '''
-ChromaPlot Version 1.0
+ChromaPlot Version 1.0.0
 Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
@@ -7,7 +7,7 @@ Authors: Billy Hobbs and Felipe Ossa
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
     QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit, QColorDialog, QComboBox, QDoubleSpinBox,
-    QButtonGroup, QRadioButton, QFrame, QSlider, QTextEdit, QSizePolicy
+    QButtonGroup, QRadioButton, QFrame, QSlider, QTextEdit, QSizePolicy, QGridLayout
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
@@ -19,6 +19,7 @@ from matplotlib.ticker import AutoMinorLocator
 import numpy as np
 import os
 import AKdatafile as AKdf
+from help_dialogs import MainHelpDialog
 
 
 class OverlayMode(QDialog):
@@ -51,8 +52,9 @@ class OverlayMode(QDialog):
         self.clear_data_button = QPushButton("Clear data")
         self.save_plot_button = QPushButton("Save plot")
         self.options_button = QPushButton("Display options")
-        self.select_curves_button = QPushButton("Select Curves")
+        self.select_curves_button = QPushButton("Select curves")
         self.back_button = QPushButton("Back")
+        self.help_button = QPushButton("Help")
 
         # Add buttons to the button layout
         self.button_layout.addWidget(self.load_data_button)
@@ -61,6 +63,7 @@ class OverlayMode(QDialog):
         self.button_layout.addWidget(self.options_button)
         self.button_layout.addWidget(self.select_curves_button)
         self.button_layout.addWidget(self.back_button)
+        self.button_layout.addWidget(self.help_button)
 
         # Create a matplotlib figure and canvas
         self.figure = plt.figure(figsize=(7, 3.5))
@@ -91,6 +94,7 @@ class OverlayMode(QDialog):
         self.options_button.clicked.connect(self.open_options_dialog)
         self.select_curves_button.clicked.connect(self.open_select_curves_dialog)
         self.back_button.clicked.connect(self.close_dialog)
+        self.help_button.clicked.connect(self.open_help_dialog)
 
     def is_data_loaded(self):
         if self.data is None:
@@ -295,6 +299,11 @@ class OverlayMode(QDialog):
         if self.parent():
             self.parent().show()
 
+    def open_help_dialog(self):
+        self.help_dialog = MainHelpDialog(self)
+
+        self.help_dialog.show()
+
 
 class OverlaySelectCurvesDialog(QDialog):
     curveOptionsChanged = pyqtSignal()
@@ -306,12 +315,14 @@ class OverlaySelectCurvesDialog(QDialog):
         self.datasets = datasets
         self.plot_settings = plot_settings
 
-        self.main_layout = QVBoxLayout()
+        self.grid_layout = QGridLayout()
+
+        self.current_row = 0
 
         for dataset_name in self.datasets.keys():
             self.setup_curve_controls(dataset_name)
 
-        self.setLayout(self.main_layout)
+        self.setLayout(self.grid_layout)
 
         self.update_controls()
 
@@ -323,40 +334,39 @@ class OverlaySelectCurvesDialog(QDialog):
             'color': 'black'
         })
 
+        # Checkbox
         checkbox = QCheckBox(dataset_name)
         checkbox.setChecked(dataset_name in self.plot_settings)
         checkbox.stateChanged.connect(lambda state, name=dataset_name: self.handle_checkbox_change(name, state))
+        self.grid_layout.addWidget(checkbox, self.current_row, 0)
 
+        # Add linestyle options
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
         linestyle_combo.setCurrentIndex(['-', '--', '-.', ':'].index(settings.get('linestyle', '-')))
         linestyle_combo.currentIndexChanged.connect(lambda index: self.handle_linestyle_change(dataset_name, index))
+        self.grid_layout.addWidget(linestyle_combo, self.current_row, 1)
 
+        # Add linewidth options
         linewidth_box = QDoubleSpinBox()
         linewidth_box.setRange(0.5, 5.0)
         linewidth_box.setSingleStep(0.5)
         linewidth_box.setValue(settings.get('linewidth', 1.5))
         linewidth_box.valueChanged.connect(lambda value: self.handle_linewidth_change(dataset_name, value))
+        self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
 
+        # Add label input for dataset
         ylabel_edit = QLineEdit(settings.get('label', dataset_name))
         ylabel_edit.setPlaceholderText("Legend Label")
         ylabel_edit.editingFinished.connect(lambda: self.handle_label_change(dataset_name, ylabel_edit.text()))
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 3)
 
+        # Add colour picker button
         color_button = QPushButton("Color")
         color_button.clicked.connect(lambda: self.handle_color_change(dataset_name))
+        self.grid_layout.addWidget(color_button, self.current_row, 4)
 
-        clear_button = QPushButton("Clear Data")
-        clear_button.clicked.connect(lambda: self.clear_curve_data(dataset_name))
-
-        hbox = QHBoxLayout()
-        hbox.addWidget(checkbox)
-        hbox.addWidget(linestyle_combo)
-        hbox.addWidget(linewidth_box)
-        hbox.addWidget(ylabel_edit)
-        hbox.addWidget(color_button)
-        # hbox.addWidget(clear_button)
-
-        self.main_layout.addLayout(hbox)
+        self.current_row += 1
 
     def handle_checkbox_change(self, dataset_name, state):
         if state == Qt.Checked:

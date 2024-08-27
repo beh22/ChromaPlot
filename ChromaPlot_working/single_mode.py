@@ -1,5 +1,5 @@
 '''
-ChromaPlot Version 1.0
+ChromaPlot Version 1.0.0
 Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
@@ -7,7 +7,7 @@ Authors: Billy Hobbs and Felipe Ossa
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QHBoxLayout, QVBoxLayout, QWidget, QDialog, QFileDialog,
     QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit, QColorDialog, QComboBox, QDoubleSpinBox,
-    QButtonGroup, QRadioButton, QFrame, QSlider, QTextEdit, QSizePolicy
+    QButtonGroup, QRadioButton, QFrame, QSlider, QTextEdit, QSizePolicy, QGridLayout, QTabWidget
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
@@ -18,6 +18,8 @@ from matplotlib.ticker import AutoMinorLocator
 
 import numpy as np
 import AKdatafile as AKdf
+
+from help_dialogs import MainHelpDialog
 
 
 class SingleMode(QDialog):
@@ -60,9 +62,10 @@ class SingleMode(QDialog):
         self.clear_data_button = QPushButton("Clear data")
         self.save_plot_button = QPushButton("Save plot")
         self.options_button = QPushButton("Display options")
-        self.select_curves_button = QPushButton("Select Curves")
+        self.select_curves_button = QPushButton("Select curves")
         self.analyse_button = QPushButton("Analyse")
         self.back_button = QPushButton("Back")
+        self.help_button = QPushButton("Help")
 
         # Add buttons to the button layout
         self.button_layout.addWidget(self.load_data_button)
@@ -72,6 +75,7 @@ class SingleMode(QDialog):
         self.button_layout.addWidget(self.select_curves_button)
         self.button_layout.addWidget(self.analyse_button)
         self.button_layout.addWidget(self.back_button)
+        self.button_layout.addWidget(self.help_button)
 
         # Create a matplotlib figure and canvas
         self.figure = plt.figure(figsize=(7,3.5))
@@ -104,6 +108,7 @@ class SingleMode(QDialog):
         self.select_curves_button.clicked.connect(self.open_select_curves_dialog)
         self.analyse_button.clicked.connect(self.open_analyse_dialog)
         self.back_button.clicked.connect(self.close_dialog)
+        self.help_button.clicked.connect(self.open_help_dialog)
 
     def update_marker_state(self, active, position=None):
         self.marker_active = active
@@ -550,6 +555,10 @@ class SingleMode(QDialog):
         self.analyse_dialog.move(self.x() + 250, self.y() + 450)
         self.analyse_dialog.show()
 
+    def open_help_dialog(self):
+        self.help_dialog = MainHelpDialog(self)
+
+        self.help_dialog.show()
 
 class SelectCurvesDialog(QDialog):
     curveOptionsChanged = pyqtSignal(dict)
@@ -561,11 +570,14 @@ class SelectCurvesDialog(QDialog):
         self.curves = curves
         self.parent = parent
 
-        self.main_layout = QVBoxLayout()
+        self.grid_layout = QGridLayout()
         self.checkboxes = {}
         self.curve_options = {}
         excluded_curves = {'Injection', 'Run Log', 'Fraction', 'UV_CUT_TEMP@100,BASEM'}
         keys = [x for x in self.curves]
+
+        # Initialise row counter for grid layout
+        self.current_row = 0
 
         # Controls for UV curve
         self.setup_uv_controls()
@@ -574,17 +586,24 @@ class SelectCurvesDialog(QDialog):
             if curve not in excluded_curves and curve != keys[0]:
                 self.setup_curve_controls(curve)
 
+        # Add grid layout to main layout
+        self.main_layout = QVBoxLayout()
+        self.main_layout.addLayout(self.grid_layout)
         self.setLayout(self.main_layout)
 
         self.update_controls()
 
     def setup_uv_controls(self):
+        # UV checkbox and label
+        uv_label = QLabel('UV:')
+        self.grid_layout.addWidget(uv_label, self.current_row, 0)
         # Add linestyle options for UV
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
         linestyle_combo.setCurrentText(self.parent.selected_curves['UV'].get('linestyle', '-'))
         linestyle_combo.setFixedWidth(50)
         linestyle_combo.currentIndexChanged.connect(lambda index, c='UV': self.handle_linestyle_change(c)(index))
+        self.grid_layout.addWidget(linestyle_combo, self.current_row, 1)
 
         # Add linewidth options for UV
         linewidth_box = QDoubleSpinBox()
@@ -593,41 +612,39 @@ class SelectCurvesDialog(QDialog):
         linewidth_box.setValue(self.parent.selected_curves['UV'].get('linewidth', 1.5))
         linewidth_box.setFixedWidth(50)
         linewidth_box.valueChanged.connect(lambda value, c='UV': self.handle_linewidth_change(c)(value))
+        self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
+
+        # Add color picker for UV
+        color_button = QPushButton("Colour")
+        color_button.clicked.connect(lambda _, c='UV': self.handle_color_change(c)())
+        self.grid_layout.addWidget(color_button, self.current_row, 3)
 
         # Add custom y-label input for UV
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
         ylabel_edit.setText(self.parent.selected_curves['UV'].get('ylabel', 'UV (mAU)'))
         ylabel_edit.editingFinished.connect(lambda c='UV': self.handle_ylabel_change(c, ylabel_edit.text()))
-
-        # Add color picker for UV
-        color_button = QPushButton("Colour")
-        color_button.clicked.connect(lambda _, c='UV': self.handle_color_change(c)())
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
 
         # Add label input for UV
         label_input = QLineEdit()
         label_input.setPlaceholderText("Legend Label")
         label_input.setText(self.parent.selected_curves['UV'].get('label', 'UV'))
         label_input.editingFinished.connect(lambda: self.handle_label_change('UV', label_input.text()))
+        self.grid_layout.addWidget(label_input, self.current_row, 5)
 
-        # Layout for UV controls
-        uv_layout = QHBoxLayout()
-        uv_layout.addWidget(QLabel('UV:'))
-        uv_layout.addWidget(linestyle_combo)
-        uv_layout.addWidget(linewidth_box)
-        uv_layout.addWidget(color_button)
-        uv_layout.addWidget(ylabel_edit)
-        uv_layout.addWidget(label_input)
-        self.main_layout.addLayout(uv_layout)
+        self.current_row += 1
 
         # Initialize UV curve options
         self.curve_options['UV'] = self.parent.selected_curves['UV']
 
     def setup_curve_controls(self, curve):
+        # Curve checkbox
         checkbox = QCheckBox(curve)
         checkbox.setChecked(curve in self.parent.selected_curves)
         checkbox.stateChanged.connect(self.update_curve_selection)
         self.checkboxes[curve] = checkbox
+        self.grid_layout.addWidget(checkbox, self.current_row, 0)
 
         # Add linestyle options
         linestyle_combo = QComboBox()
@@ -635,6 +652,7 @@ class SelectCurvesDialog(QDialog):
         linestyle_combo.setCurrentText(self.parent.selected_curves.get(curve, {}).get('linestyle', '-'))
         linestyle_combo.setFixedWidth(50)
         linestyle_combo.currentIndexChanged.connect(lambda index, c=curve: self.handle_linestyle_change(c)(index))
+        self.grid_layout.addWidget(linestyle_combo, self.current_row, 1)
 
         # Add linewidth options
         linewidth_box = QDoubleSpinBox()
@@ -643,33 +661,28 @@ class SelectCurvesDialog(QDialog):
         linewidth_box.setValue(self.parent.selected_curves.get(curve, {}).get('linewidth', 1.5))
         linewidth_box.setFixedWidth(50)
         linewidth_box.valueChanged.connect(lambda value, c=curve: self.handle_linewidth_change(c)(value))
+        self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
+
+        # Add color picker button
+        color_button = QPushButton("Colour")
+        color_button.clicked.connect(lambda _, c=curve: self.handle_color_change(c)())
+        self.grid_layout.addWidget(color_button, self.current_row, 3)
 
         # Add custom y-label input for curve
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
         ylabel_edit.setText(self.parent.selected_curves.get(curve, {}).get('ylabel', curve))
         ylabel_edit.editingFinished.connect(lambda c=curve: self.handle_ylabel_change(c, ylabel_edit.text()))
-
-        # Add color picker button
-        color_button = QPushButton("Colour")
-        color_button.clicked.connect(lambda _, c=curve: self.handle_color_change(c)())
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
 
         # Add label input for the curve
         label_input = QLineEdit()
         label_input.setPlaceholderText("Legend Label")
         label_input.setText(self.parent.selected_curves.get(curve, {}).get('label', curve))
         label_input.editingFinished.connect(lambda: self.handle_label_change(curve, label_input.text()))
+        self.grid_layout.addWidget(label_input, self.current_row, 5)
 
-        # Layout for the curve options
-        curve_layout = QHBoxLayout()
-        curve_layout.addWidget(checkbox)
-        curve_layout.addWidget(linestyle_combo)
-        curve_layout.addWidget(linewidth_box)
-        curve_layout.addWidget(color_button)
-        curve_layout.addWidget(ylabel_edit)
-        curve_layout.addWidget(label_input)
-
-        self.main_layout.addLayout(curve_layout)
+        self.current_row += 1
 
         self.curve_options[curve] = self.parent.selected_curves.get(curve, {
             'linestyle': '-',
@@ -868,7 +881,7 @@ class OptionsDialog(QDialog):
         # Layout for color and alpha controls
         shade_controls_layout = QHBoxLayout()
         shade_controls_layout.addWidget(self.shade_color_button)
-        shade_controls_layout.addWidget(QLabel("                Alpha:"))
+        shade_controls_layout.addWidget(QLabel("                Transparency:"))
         shade_controls_layout.addWidget(self.alpha_spinbox)
 
         self.layout.addLayout(shade_controls_layout)
@@ -1139,3 +1152,145 @@ class AnalyseDialog(QDialog):
         y_values_str += "\n".join([f"{label}: {y:.2f}" for label, y in y_values.items()])
         self.y_values_display.setText(y_values_str)
 
+
+# class HelpDialog(QDialog):
+#     def __init__(self, parent=None):
+#         super().__init__(parent)
+#         self.setWindowTitle("Help")
+#         self.setGeometry(100, 100, 600, 400)  # Set the size of the dialog
+
+#         # Create a tab widget
+#         self.tab_widget = QTabWidget()
+
+#         # Add tabs for different sections of the help content
+#         self.tab_widget.addTab(self.create_general_tab(), "General")
+#         self.tab_widget.addTab(self.create_plotting_tab(), "Plotting")
+#         self.tab_widget.addTab(self.create_options_tab(), "Options")
+#         self.tab_widget.addTab(self.create_analysis_tab(), "Analysis")
+#         self.tab_widget.addTab(self.create_about_tab(), "About")
+
+#         # Set the layout
+#         layout = QVBoxLayout()
+#         layout.addWidget(self.tab_widget)
+#         self.setLayout(layout)
+
+#     def create_general_tab(self):
+#         """Create the General tab content."""
+#         general_tab = QWidget()
+#         layout = QVBoxLayout()
+
+#         general_label = QLabel()
+#         general_label.setWordWrap(True)
+#         general_label.setText(
+#             "<h3>Welcome to ChromaPlot!</h3>"
+#             "<p>ChromaPlot is a tool designed for analyzing chromatographic data. "
+#             "In Single Mode, you can load a dataset, customize your plot, and analyze it with various tools.</p>"
+#             "<p>Here's a quick overview of the features:</p>"
+#             "<ul>"
+#             "<li><b>Load Data</b>: Import your dataset to start plotting.</li>"
+#             "<li><b>Clear Data</b>: Remove the current dataset and reset the plot.</li>"
+#             "<li><b>Save Plot</b>: Save the current plot as an image file.</li>"
+#             "<li><b>Display Options</b>: Customize plot settings such as axis limits and legend placement.</li>"
+#             "<li><b>Select Curves</b>: Choose which curves to display and customize their appearance.</li>"
+#             "<li><b>Analyse</b>: Add markers to the plot for detailed analysis of specific points.</li>"
+#             "</ul>"
+#         )
+
+#         layout.addWidget(general_label)
+#         layout.addStretch()  # Push content to the top
+#         general_tab.setLayout(layout)
+#         return general_tab
+
+#     def create_plotting_tab(self):
+#         """Create the Plotting tab content."""
+#         plotting_tab = QWidget()
+#         layout = QVBoxLayout()
+
+#         plotting_label = QLabel()
+#         plotting_label.setWordWrap(True)
+#         plotting_label.setText(
+#             "<h3>Plotting in Single Mode</h3>"
+#             "<p>After loading your data, the UV curve is automatically plotted. "
+#             "You can add other curves by selecting them from the 'Select Curves' dialog.</p>"
+#             "<p><b>Customize Curves:</b> In the 'Select Curves' dialog, you can choose the line style, width, color, "
+#             "and label for each curve. This allows for clear differentiation between multiple curves on the same plot.</p>"
+#             "<p><b>Axis Limits:</b> Set custom axis limits using the 'Display Options' dialog. "
+#             "You can reset the limits to their default values at any time.</p>"
+#             "<p><b>Fraction Labels:</b> If your dataset includes fraction information, you can add labels to your plot "
+#             "to mark specific fractions. This can be toggled on or off in the options.</p>"
+#         )
+
+#         layout.addWidget(plotting_label)
+#         layout.addStretch()
+#         plotting_tab.setLayout(layout)
+#         return plotting_tab
+
+#     def create_options_tab(self):
+#         """Create the Options tab content."""
+#         options_tab = QWidget()
+#         layout = QVBoxLayout()
+
+#         options_label = QLabel()
+#         options_label.setWordWrap(True)
+#         options_label.setText(
+#             "<h3>Options and Customizations</h3>"
+#             "<p>The 'Display Options' dialog allows you to fine-tune the appearance of your plot:</p>"
+#             "<ul>"
+#             "<li><b>Add Legend:</b> Toggle the display of the legend on the plot. "
+#             "You can place the legend above the plot or in the best-fit location.</li>"
+#             "<li><b>Add Fraction Labels:</b> Display labels for different fractions along the x-axis. "
+#             "This is useful for identifying specific sections of your data.</li>"
+#             "<li><b>Set Axis Limits:</b> Manually set the minimum and maximum values for the x and y axes. "
+#             "You can apply these settings or reset them to the default range.</li>"
+#             "<li><b>Shading:</b> Highlight specific regions of the plot by shading them. "
+#             "You can shade by fractions or volumes, and customize the color and transparency of the shading.</li>"
+#             "</ul>"
+#         )
+
+#         layout.addWidget(options_label)
+#         layout.addStretch()
+#         options_tab.setLayout(layout)
+#         return options_tab
+
+#     def create_analysis_tab(self):
+#         """Create the Analysis tab content."""
+#         analysis_tab = QWidget()
+#         layout = QVBoxLayout()
+
+#         analysis_label = QLabel()
+#         analysis_label.setWordWrap(True)
+#         analysis_label.setText(
+#             "<h3>Data Analysis in Single Mode</h3>"
+#             "<p>The 'Analyse' button provides tools to investigate your data more closely:</p>"
+#             "<ul>"
+#             "<li><b>Add Vertical Marker:</b> Place a vertical line on the plot to mark a specific volume. "
+#             "You can move this marker across the x-axis to see the corresponding y-values for each curve.</li>"
+#             "<li><b>View Y-Values:</b> As you move the vertical marker, the y-values for all displayed curves "
+#             "at that specific volume are shown. This is helpful for comparing different data points.</li>"
+#             "</ul>"
+#         )
+
+#         layout.addWidget(analysis_label)
+#         layout.addStretch()
+#         analysis_tab.setLayout(layout)
+#         return analysis_tab
+
+#     def create_about_tab(self):
+#         """Create the About tab content."""
+#         about_tab = QWidget()
+#         layout = QVBoxLayout()
+
+#         about_label = QLabel()
+#         about_label.setWordWrap(True)
+#         about_label.setText(
+#             "<h3>ChromaPlot Version 1.0.0</h3>"
+#             "<p>Authors: Billy Hobbs and Felipe Ossa</p>"
+#             "<p>© 2024 Billy Hobbs. All rights reserved.</p>"
+#             "<p>ChromaPlot is developed to assist in the analysis of chromatographic data, "
+#             "providing users with powerful tools for visualizing and examining their datasets.</p>"
+#         )
+
+#         layout.addWidget(about_label)
+#         layout.addStretch()
+#         about_tab.setLayout(layout)
+#         return about_tab

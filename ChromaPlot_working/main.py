@@ -1,5 +1,5 @@
 '''
-ChromaPlot Version 1.0
+ChromaPlot Version 1.0.0
 Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
@@ -29,10 +29,13 @@ To do:
 - Search for updates
 - Help/instruction pages
 - Shading to overlay mode
+- Add toggle legend position to overlay mode
 
 - Don't crash if there are no fractions - sort of fixed
 
 - Shade fractions with silly numbering from 96 well fraction things
+
+- Warning when changing modes
 '''
 
 
