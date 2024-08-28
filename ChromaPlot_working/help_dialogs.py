@@ -294,8 +294,9 @@ class OverlayModeHelpDialog(QDialog):
         plotting_label.setWordWrap(True)
         plotting_label.setText(
             "<h2>Plotting in Overlay Mode</h2>"
-            "<p><b>Load Data:</b> Click 'Load Data' and navigate to select a dataset you would like to plot. "
-            "The file to load should be one exported from UNICORN and have .txt, .asc, or .csv file extensions. "
+            "<p><b>Load Data:</b> Multiple datasets can be loadeded at once. "
+            "Click 'Load Data' and navigate to select datasets you would like to plot. "
+            "The files to load should be one exported from UNICORN and have .txt, .asc, or .csv file extensions. "
             "Exports from multiple versions of UNICORN are supported.</p>"
             "<p>Once loaded, the UV curve from the dataset will be automatically plotted. "
             "To overlay a new dataset, select this dataset through 'Load Data' and it will automatically be added.</p>"

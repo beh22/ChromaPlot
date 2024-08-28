@@ -104,32 +104,33 @@ class OverlayMode(QDialog):
         return True
 
     def load_data(self):
-        # Load data and open select curves dialog
+    # Load data and open select curves dialog
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
-        file_name, _ = QFileDialog.getOpenFileName(
-            self, "Load Data File", "",
+        file_names, _ = QFileDialog.getOpenFileNames(
+            self, "Load Data Files", "",
             "Text Files (*.txt);;ASC Files (*.asc);;CSV Files (*.csv);;All Files (*)",
             options=options
         )
-        if file_name:
-            print(f"File loaded: {file_name}")
-            dataset_name = os.path.basename(file_name)
-            data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
+        if file_names:
+            for file_name in file_names:
+                print(f"File loaded: {file_name}")
+                dataset_name = os.path.basename(file_name)
+                data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
 
-            # Store dataset and default plot settings
-            self.loaded_datasets[dataset_name] = data
-            self.plot_settings[dataset_name] = {
-                'linestyle': '-',
-                'linewidth': 1.5,
-                'color': 'black',
-                'label': dataset_name
-            }
+                # Store dataset and default plot settings
+                self.loaded_datasets[dataset_name] = data
+                self.plot_settings[dataset_name] = {
+                    'linestyle': '-',
+                    'linewidth': 1.5,
+                    'color': 'black',
+                    'label': dataset_name
+                }
 
-            # Open the Select Curves dialog for this dataset
+            # Open the Select Curves dialog after loading all datasets
             self.open_select_curves_dialog()
 
-            # Update the plot with the new dataset
+            # Update the plot with the new datasets
             self.update_plot()
 
     def open_select_curves_dialog(self):
