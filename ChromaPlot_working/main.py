@@ -8,7 +8,6 @@ import sys
 from PyQt5.QtWidgets import QApplication
 from main_window import MainWindow
 from update_checker import check_for_updates, prompt_for_update
-import os
 
 '''
 To do:

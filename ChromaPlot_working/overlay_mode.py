@@ -27,8 +27,9 @@ class OverlayMode(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Overlay Mode")
 
-        self.loaded_datasets = {}  
-        self.plot_settings = {}  
+        self.loaded_datasets = {}
+        self.plot_settings = {}
+        self.stored_plot_settings = {}
 
         self.xmin = None
         self.xmax = None
@@ -104,7 +105,6 @@ class OverlayMode(QDialog):
         return True
 
     def load_data(self):
-    # Load data and open select curves dialog
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
         file_names, _ = QFileDialog.getOpenFileNames(
@@ -114,18 +114,18 @@ class OverlayMode(QDialog):
         )
         if file_names:
             for file_name in file_names:
-                print(f"File loaded: {file_name}")
                 dataset_name = os.path.basename(file_name)
                 data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
 
-                # Store dataset and default plot settings
+                if dataset_name not in self.plot_settings and dataset_name not in self.stored_plot_settings:
+                    self.plot_settings[dataset_name] = {
+                        'linestyle': '-',
+                        'linewidth': 1.5,
+                        'color': 'black',
+                        'label': dataset_name
+                    }
+
                 self.loaded_datasets[dataset_name] = data
-                self.plot_settings[dataset_name] = {
-                    'linestyle': '-',
-                    'linewidth': 1.5,
-                    'color': 'black',
-                    'label': dataset_name
-                }
 
             # Open the Select Curves dialog after loading all datasets
             self.open_select_curves_dialog()
@@ -174,22 +174,21 @@ class OverlayMode(QDialog):
         handles = []
         labels = []
 
-        if self.plot_settings:
-            for dataset_name, settings in self.plot_settings.items():
-                data = self.loaded_datasets.get(dataset_name)
-                if data:
-                    curvekeys = list(data['UV'].keys())
-                    x = np.array(data['UV'][curvekeys[0]])
-                    y = np.array(data['UV'][curvekeys[1]])
+        for dataset_name, settings in self.plot_settings.items():
+            if dataset_name in self.loaded_datasets:
+                data = self.loaded_datasets[dataset_name]
+                curvekeys = list(data['UV'].keys())
+                x = np.array(data['UV'][curvekeys[0]])
+                y = np.array(data['UV'][curvekeys[1]])
 
-                    line, = ax.plot(
-                        x, y, label=settings['label'],
-                        color=settings['color'],
-                        linestyle=settings['linestyle'],
-                        linewidth=settings['linewidth']
-                    )
-                    handles.append(line)
-                    labels.append(settings['label'])
+                line, = ax.plot(
+                    x, y, label=settings['label'],
+                    color=settings['color'],
+                    linestyle=settings['linestyle'],
+                    linewidth=settings['linewidth']
+                )
+                handles.append(line)
+                labels.append(settings['label'])
 
         else:
             # If no datasets are selected, just plot empty axes with the set limits
@@ -324,25 +323,30 @@ class OverlaySelectCurvesDialog(QDialog):
 
         self.datasets = datasets
         self.plot_settings = plot_settings
+        self.parent = parent
 
         self.grid_layout = QGridLayout()
-
         self.current_row = 0
 
         for dataset_name in self.datasets.keys():
             self.setup_curve_controls(dataset_name)
 
         self.setLayout(self.grid_layout)
-
         self.update_controls()
 
     def setup_curve_controls(self, dataset_name):
-        settings = self.plot_settings.get(dataset_name, {
-            'linestyle': '-',
-            'linewidth': 1.5,
-            'label': dataset_name,
-            'color': 'black'
-        })
+        if dataset_name in self.plot_settings:
+            settings = self.plot_settings[dataset_name]
+        elif dataset_name in self.parent.stored_plot_settings:
+            settings = self.parent.stored_plot_settings[dataset_name]
+            self.plot_settings[dataset_name] = settings
+        else:
+            settings = {
+                'linestyle': '-',
+                'linewidth': 1.5,
+                'label': dataset_name,
+                'color': 'black'
+            }
 
         # Checkbox
         checkbox = QCheckBox(dataset_name)
@@ -380,7 +384,9 @@ class OverlaySelectCurvesDialog(QDialog):
 
     def handle_checkbox_change(self, dataset_name, state):
         if state == Qt.Checked:
-            if dataset_name not in self.plot_settings:
+            if dataset_name in self.parent.stored_plot_settings:
+                self.plot_settings[dataset_name] = self.parent.stored_plot_settings.pop(dataset_name)
+            else:
                 self.plot_settings[dataset_name] = {
                     'linestyle': '-',
                     'linewidth': 1.5,
@@ -389,7 +395,7 @@ class OverlaySelectCurvesDialog(QDialog):
                 }
         else:
             if dataset_name in self.plot_settings:
-                del self.plot_settings[dataset_name]
+                self.parent.stored_plot_settings[dataset_name] = self.plot_settings.pop(dataset_name)
 
         self.curveOptionsChanged.emit()
 
