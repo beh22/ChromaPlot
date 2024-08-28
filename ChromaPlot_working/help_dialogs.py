@@ -5,9 +5,9 @@ Authors: Billy Hobbs and Felipe Ossa
 '''
 
 from PyQt5.QtWidgets import (
-     QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QLabel, QTabWidget
+     QDialog, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QLabel, QTabWidget
 )
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 
 import sys
@@ -16,78 +16,116 @@ import os
 class MainHelpDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+
         self.setWindowTitle("ChromaPlot Help")
-        self.setGeometry(100, 100, 400, 410)
 
-        layout = QVBoxLayout()
+        self.single_mode_help_dialog = None
+        self.overlay_mode_help_dialog = None
 
+        # Create the main layout
+        main_layout = QVBoxLayout()
+
+        # Add the logo
         logo_label = QLabel()
         logo_path = self.resource_path("cp_logo.png")
         logo_pixmap = QPixmap(logo_path)
-        desired_width = 250
-        desired_height = 125
+        desired_width = 300
+        desired_height = 150
         scaled_logo_pixmap = logo_pixmap.scaled(desired_width, desired_height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         logo_label.setPixmap(scaled_logo_pixmap)
         logo_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(logo_label)
+        main_layout.addWidget(logo_label)
 
-        help_label = QLabel()
-        help_label.setWordWrap(True)
-        help_label.setText(
-            "<h1>Welcome to ChromaPlot!</h1>"
+        # Add a welcome message
+        welcome_label = QLabel(f"Welcome to ChromaPlot Help!")
+        welcome_label.setAlignment(Qt.AlignCenter)
+        welcome_label.setFont(QFont("Arial", 16, QFont.Bold))
+        main_layout.addWidget(welcome_label)
+
+        main_layout.addSpacing(10)
+
+        overall_description = QLabel(
             "<p>ChromaPlot is a tool designed for plotting and analysing chromatographic data exported from "
-            "(currently) Cytiva’s UNICORN software, used to run AKTA’s.</p>"
-            "<p>You can currently choose from two modes:</p>"
-            "<ul>"
-            "<li><b>Single mode:</b> Create plots of single datasets</li>"
-            "<li><b>Overlay mode:</b> Compare the UV traces for multiple datasets</li>"
-            "</ul>"
-            "<p>Click on one of the modes below to explore how they work.</p>"
+            "Cytiva’s UNICORN software, used to run AKTA’s.</p>"
         )
 
-        # Buttons to open specific help dialogs for each mode
-        single_mode_button = QPushButton("Single Mode Help")
-        overlay_mode_button = QPushButton("Overlay Mode Help")
+        overall_description.setAlignment(Qt.AlignCenter)
+        overall_description.setWordWrap(True)
+        main_layout.addWidget(overall_description)
 
-        # Layout for the buttons
+        main_layout.addSpacing(10)
+
+        info_label = QLabel("<b><span style='font-size:14pt'>Select a mode to get started:</span></b>")
+        info_label.setFont(QFont("Arial", 14))
+        main_layout.addWidget(info_label)
+
+        single_mode_description = QLabel(
+            "<b><span style='font-size:14pt'>Single Mode:</span></b> Create plots of single datasets. Add and remove traces, with customisable options."
+        )
+        overlay_mode_description = QLabel(
+            "<b><span style='font-size:14pt'>Overlay Mode:</span></b> Overlay and customise multiple datasets for easy comparison."
+        )
+        single_mode_description.setWordWrap(True)
+        overlay_mode_description.setWordWrap(True)
+        main_layout.addWidget(single_mode_description)
+        main_layout.addWidget(overlay_mode_description)
+
+        main_layout.addSpacing(10)
+
+        # Create buttons for the modes
+        self.single_mode_button = QPushButton("Single Mode Help")
+        self.overlay_mode_button = QPushButton("Overlay Mode Help")
+
+        # Create a layout for the buttons
         button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(single_mode_button)
-        button_layout.addSpacing(20)
-        button_layout.addWidget(overlay_mode_button)
-        button_layout.addStretch()
+        button_layout.addWidget(self.single_mode_button)
+        button_layout.addWidget(self.overlay_mode_button)
 
-        # Set up the main layout
-        layout.addWidget(help_label)
-        layout.addLayout(button_layout)
-        layout.addStretch()
+        # Add the button layout to the main layout
+        main_layout.addLayout(button_layout)
 
-        # Add copyright information at the bottom
+        main_layout.addSpacing(10)         
+
+        # Add a link to GitHub and email
+        github_link = QLabel()
+        github_link.setText('Please report issues on <a href="https://github.com/beh22/ChromaPlot/">GitHub</a> or <a href="mailto:billyehobbs@gmail.com">email us</a>')
+        github_link.setOpenExternalLinks(True)
+        github_link.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(github_link)
+
+        # Add a copyright label at the bottom
         copyright_label = QLabel("© 2024 Billy Hobbs. All rights reserved.")
         copyright_label.setAlignment(Qt.AlignCenter)
         copyright_label.setStyleSheet("font-size: 10px; color: grey;")
-        layout.addWidget(copyright_label)
 
-        self.setLayout(layout)
+        # Add copyright label to the main layout
+        main_layout.addWidget(copyright_label)
+
+        self.setLayout(main_layout)
 
         # Connect the buttons to their respective methods
-        single_mode_button.clicked.connect(self.open_single_mode_help)
-        overlay_mode_button.clicked.connect(self.open_overlay_mode_help)
+        self.single_mode_button.clicked.connect(self.open_single_mode_help)
+        self.overlay_mode_button.clicked.connect(self.open_overlay_mode_help)
 
     def open_single_mode_help(self):
-        single_mode_help_dialog = SingleModeHelpDialog(self)
-        single_mode_help_dialog.exec_()
+        if self.single_mode_help_dialog:
+            self.single_mode_help_dialog.close()
+
+        self.single_mode_help_dialog = SingleModeHelpDialog(self)
+        self.single_mode_help_dialog.show()
 
     def open_overlay_mode_help(self):
-        overlay_mode_help_dialog = OverlayModeHelpDialog(self)
-        overlay_mode_help_dialog.exec_()
+        if self.overlay_mode_help_dialog:
+            self.overlay_mode_help_dialog.close()
+
+        self.overlay_mode_help_dialog = OverlayModeHelpDialog(self)
+        self.overlay_mode_help_dialog.show()
 
     def resource_path(self, relative_path):
         """ Helper function to find the logo resource path. """
         if hasattr(sys, '_MEIPASS'):
             return os.path.join(sys._MEIPASS, relative_path)
         return os.path.join(os.path.abspath("./resources/"), relative_path)
-
 
 class SingleModeHelpDialog(QDialog):
     def __init__(self, parent=None):
