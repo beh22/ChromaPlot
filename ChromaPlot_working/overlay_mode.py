@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QMessageBox, QCheckBox, QLabel, QDialogButtonBox, QLineEdit, QColorDialog, QComboBox, QDoubleSpinBox,
     QButtonGroup, QRadioButton, QFrame, QSlider, QTextEdit, QSizePolicy, QGridLayout
 )
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QFont
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -36,13 +36,17 @@ class OverlayMode(QDialog):
         self.ymin = None
         self.ymax = None
 
-        self.y_label = "UV (mAU)"
+        self.y_label = "Absorbance (mAU)"
 
         self.show_legend = False
         self.legend_location = 'best'
 
+        self.marker_active = False
+        self.marker_position = None
+
         self.select_curves_dialog = None
         self.options_dialog = None
+        self.analyse_dialog = None
 
         # Create layouts
         self.main_layout = QVBoxLayout()
@@ -55,6 +59,7 @@ class OverlayMode(QDialog):
         self.save_plot_button = QPushButton("Save plot")
         self.options_button = QPushButton("Display options")
         self.select_curves_button = QPushButton("Select curves")
+        self.analyse_button = QPushButton("Analyse")
         self.back_button = QPushButton("Back")
         self.help_button = QPushButton("Help")
 
@@ -64,6 +69,7 @@ class OverlayMode(QDialog):
         self.button_layout.addWidget(self.save_plot_button)
         self.button_layout.addWidget(self.options_button)
         self.button_layout.addWidget(self.select_curves_button)
+        self.button_layout.addWidget(self.analyse_button)
         self.button_layout.addWidget(self.back_button)
         self.button_layout.addWidget(self.help_button)
 
@@ -95,11 +101,18 @@ class OverlayMode(QDialog):
         self.save_plot_button.clicked.connect(self.save_plot)
         self.options_button.clicked.connect(self.open_options_dialog)
         self.select_curves_button.clicked.connect(self.open_select_curves_dialog)
+        self.analyse_button.clicked.connect(self.open_analyse_dialog)
         self.back_button.clicked.connect(self.close_dialog)
         self.help_button.clicked.connect(self.open_help_dialog)
 
+    def update_marker_state(self, active, position=None):
+        self.marker_active = active
+        if position is not None:
+            self.marker_position = position
+        self.update_plot()
+
     def is_data_loaded(self):
-        if self.data is None:
+        if not self.loaded_datasets:
             QMessageBox.warning(self, "No Data Loaded", "Please load data before using this option.")
             return False
         return True
@@ -167,6 +180,24 @@ class OverlayMode(QDialog):
         self.options_dialog.legendLocationChanged.connect(self.set_legend_location)
         self.options_dialog.yLabelChanged.connect(self.set_y_label)
 
+    def open_analyse_dialog(self):
+        if not self.loaded_datasets:
+            QMessageBox.warning(self, "No Data Loaded", "Please load data before using this option")
+            return
+        if hasattr(self, 'analyse_dialog') and self.analyse_dialog:
+            self.analyse_dialog.close()
+
+        self.analyse_dialog = OverlayAnalyseDialog(self)
+        
+        # Set the marker checkbox state based on OverlayMode's marker_active attribute
+        self.analyse_dialog.add_marker_checkbox.setChecked(self.marker_active)
+        if self.marker_active and self.marker_position is not None:
+            self.analyse_dialog.slider.setEnabled(True)
+            self.analyse_dialog.slider.setValue(int(self.marker_position))
+
+        self.analyse_dialog.move(self.x() + 250, self.y() + 450)
+        self.analyse_dialog.show()
+
     def update_plot(self):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
@@ -202,6 +233,8 @@ class OverlayMode(QDialog):
 
         ax.set_xlabel('Volume (mL)')
         ax.set_ylabel(self.y_label)
+
+        self.ax1 = ax
 
         if self.show_legend and handles:
             if self.legend_location == 'upper center':
@@ -369,16 +402,16 @@ class OverlaySelectCurvesDialog(QDialog):
         linewidth_box.valueChanged.connect(lambda value: self.handle_linewidth_change(dataset_name, value))
         self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
 
+        # Add colour picker button
+        color_button = QPushButton("Colour")
+        color_button.clicked.connect(lambda: self.handle_color_change(dataset_name))
+        self.grid_layout.addWidget(color_button, self.current_row, 3)
+
         # Add label input for dataset
         ylabel_edit = QLineEdit(settings.get('label', dataset_name))
         ylabel_edit.setPlaceholderText("Legend Label")
         ylabel_edit.editingFinished.connect(lambda: self.handle_label_change(dataset_name, ylabel_edit.text()))
-        self.grid_layout.addWidget(ylabel_edit, self.current_row, 3)
-
-        # Add colour picker button
-        color_button = QPushButton("Color")
-        color_button.clicked.connect(lambda: self.handle_color_change(dataset_name))
-        self.grid_layout.addWidget(color_button, self.current_row, 4)
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
 
         self.current_row += 1
 
@@ -613,3 +646,143 @@ class OverlayOptionsDialog(QDialog):
     def reset_y_limits(self):
         self.resetYLimits.emit()
 
+
+class OverlayAnalyseDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Analyse")
+
+        self.parent = parent
+        self.marker_line = None
+
+        # Create layout
+        self.layout = QVBoxLayout()
+
+        title = QLabel("Analyse")
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(16)
+        title.setFont(font)
+        self.layout.addWidget(title)
+
+        # Add 'Add vertical marker' checkbox
+        self.add_marker_checkbox = QCheckBox("Add vertical marker")
+        self.layout.addWidget(self.add_marker_checkbox)
+
+        # Add slider
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setEnabled(False)  # Initially disabled until checkbox is checked
+        self.layout.addWidget(self.slider)
+
+        self.y_values_display = QLabel()
+        self.y_values_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.y_values_display.setWordWrap(True)
+        self.layout.addWidget(self.y_values_display)
+
+        # Connect signals
+        self.add_marker_checkbox.stateChanged.connect(self.toggle_marker)
+        self.slider.valueChanged.connect(self.update_marker_position)
+
+        # Set the layout
+        self.setLayout(self.layout)
+
+        if self.parent.marker_active:
+            self.toggle_marker(Qt.Checked)
+            self.slider.setValue(int(self.parent.marker_position * 100))
+
+    def toggle_marker(self, state):
+        if state == Qt.Checked:
+            self.slider.setEnabled(True)
+            if not self.marker_line:
+                self.add_vertical_marker()
+        else:
+            self.slider.setEnabled(False)
+            self.remove_vertical_marker()
+
+    def add_vertical_marker(self):
+        ax1 = self.parent.ax1
+
+        # Retrieve current x limits from the plot, use them if xmin and xmax are None
+        xmin = self.parent.xmin if self.parent.xmin is not None else ax1.get_xlim()[0]
+        xmax = self.parent.xmax if self.parent.xmax is not None else ax1.get_xlim()[1]
+
+        # Ensure xmin and xmax are valid numbers
+        if xmin is None or xmax is None:
+            QMessageBox.warning(self, "Error", "X-axis limits are not set properly.")
+            return
+
+        # Convert them to integers for the slider range
+        self.slider.setRange(int(xmin * 100), int(xmax * 100))
+        self.slider.setSingleStep(1)
+
+        # Set the initial position of the slider to the midpoint of the range
+        if self.parent.marker_position is not None:
+            initial_position = self.parent.marker_position
+        else:
+            initial_position = (xmin + xmax) / 2  # Midpoint of the range
+
+        self.slider.setValue(int(initial_position * 100))
+
+        # Add the vertical marker line to the plot
+        self.marker_line = ax1.axvline(initial_position, color='red', linestyle='--')
+
+        # Update the y-values for the initial position
+        self.update_y_values(initial_position)
+
+        # Force a redraw of the canvas to display the marker immediately
+        self.parent.canvas.draw()
+
+    def remove_vertical_marker(self):
+        if self.marker_line:
+            self.marker_line.remove()
+            self.marker_line = None
+            self.y_values_display.clear()
+            self.parent.canvas.draw()
+
+    # This version works properly but is slow because the whole plot 
+    # needs to be updated as the marker is moved
+    # def update_marker_position(self, value):
+    #     if self.marker_line:
+    #         self.marker_line.set_xdata([value / 100, value / 100])
+    #         self.update_y_values(value / 100)
+    #         self.parent.update_marker_state(True, value / 100)  # Update the parent's marker state with the new position
+    #         self.parent.canvas.draw()
+
+    # This version is quicker, but messes up when other aspects of the plot is changed
+    # Marker needs to be turned on and off again
+    
+    def update_marker_position(self, value):
+        if self.marker_line:
+            x_value = value / 100.0
+            # Update the marker line's position without redrawing the entire canvas
+            self.marker_line.set_xdata([x_value, x_value])
+            self.update_y_values(x_value)
+            self.parent.canvas.draw_idle()
+
+    def update_y_values(self, x_value):
+        y_values = {}
+
+        for dataset_name, data in self.parent.loaded_datasets.items():
+            curvekeys = list(data['UV'].keys())
+            x_data = np.array(data['UV'][curvekeys[0]])
+            y_data = np.array(data['UV'][curvekeys[1]])
+            y_value = np.interp(x_value, x_data, y_data)
+            y_values[dataset_name] = y_value
+
+        y_values_str = f"Marker Position: {x_value:.2f} mL\n"
+        y_values_str += "\n".join([f"{dataset}: {y:.2f} mAU" for dataset, y in y_values.items()])
+        self.y_values_display.setText(y_values_str)
+
+        self.adjust_dialog_size(y_values_str)
+
+    def adjust_dialog_size(self, text):
+        font_metrics = self.y_values_display.fontMetrics()
+        longest_line_width = max(font_metrics.horizontalAdvance(line) for line in text.split("\n"))
+
+        margin = 20
+
+        new_width = longest_line_width + margin
+        current_size = self.size()
+        new_size = current_size.expandedTo(QSize(new_width, current_size.height()))
+
+        self.resize(new_size)

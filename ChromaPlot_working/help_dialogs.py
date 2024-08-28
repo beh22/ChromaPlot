@@ -256,6 +256,7 @@ class OverlayModeHelpDialog(QDialog):
         self.tab_widget.addTab(self.create_general_tab(), "General")
         self.tab_widget.addTab(self.create_plotting_tab(), "Plotting")
         self.tab_widget.addTab(self.create_options_tab(), "Display Options")
+        self.tab_widget.addTab(self.create_analysis_tab(), "Analysis")
 
         layout = QVBoxLayout()
         layout.addWidget(self.tab_widget)
@@ -339,3 +340,26 @@ class OverlayModeHelpDialog(QDialog):
         layout.addStretch()
         options_tab.setLayout(layout)
         return options_tab
+    
+    def create_analysis_tab(self):
+        analysis_tab = QWidget()
+        layout = QVBoxLayout()
+
+        analysis_label = QLabel()
+        analysis_label.setWordWrap(True)
+        analysis_label.setText(
+            "<h2>Analysis</h2>"
+            "<p>The 'Analyse' button provides tools to investigate your data more closely:</p>"
+            "<ul>"
+            "<li><b>Vertical Marker:</b> Place a vertical line on the plot to mark a specific volume. "
+            "You can move this marker across the x-axis to see the corresponding y-values for each curve. "
+            "As you move the vertical marker, the y-values for all displayed curves at that specific volume are shown. <br>"
+            "<b>NOTE: the vertical marker in Overlay Mode is a work in progress. It contains multiple known bugs</b></li>"
+            "</ul>"
+            "<p>More tools will be added to 'Analyse' in the future.</p>"
+        )
+
+        layout.addWidget(analysis_label)
+        layout.addStretch()
+        analysis_tab.setLayout(layout)
+        return analysis_tab

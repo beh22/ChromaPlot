@@ -27,9 +27,6 @@ To do:
 - Improve help page
 - Shading to overlay mode
 
-- Select multiple datasets at once in overlay mode
-- Remember curve settings when adding and removing curves
-
 - Don't crash if there are no fractions - sort of fixed
 
 - Shade fractions with silly numbering from 96 well fraction things

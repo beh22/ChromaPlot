@@ -38,7 +38,7 @@ class SingleMode(QDialog):
 
         self.shaded_regions = []
         self.show_shaded_fractions = False
-        self.selected_curves = {'UV': {'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'UV (mAU)', 'label': 'UV'}}
+        self.selected_curves = {'UV': {'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'Absorbance (mAU)', 'label': 'UV'}}
         
         self.select_curves_dialog = None
         self.options_dialog = None
@@ -169,7 +169,7 @@ class SingleMode(QDialog):
 
     def update_selected_curves(self, selected_curves):
         # Clear existing non-UV curves from selected_curves
-        self.selected_curves = {'UV': self.selected_curves.get('UV', {'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'UV (mAU)', 'label': 'UV'})}
+        self.selected_curves = {'UV': self.selected_curves.get('UV', {'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'Absorbance (mAU)', 'label': 'UV'})}
 
         # Update with new selections from the dialog
         self.selected_curves.update(selected_curves)
@@ -191,7 +191,7 @@ class SingleMode(QDialog):
         # if 'UV' in self.data:
         keys = [x for x in self.data.keys()]
         uv_options = self.selected_curves.get('UV', {
-            'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'UV (mAU)', 'label': 'UV'
+            'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'Absorbance (mAU)', 'label': 'UV'
         })
         curvekeys = list(self.data[keys[0]].keys())
         x = np.array(self.data[keys[0]][curvekeys[0]])
@@ -199,8 +199,8 @@ class SingleMode(QDialog):
         
         uv_line, = ax.plot(x, y, label=uv_options['label'], color=uv_options['color'], linestyle=uv_options['linestyle'], linewidth=uv_options['linewidth'])
         ax.set_xlim(left=0, right=max(x))
-        ax.set_ylabel(uv_options['ylabel'], color=uv_options['color'])
-        ax.tick_params(axis='y', labelcolor=uv_options['color'])
+        ax.set_ylabel(uv_options['ylabel'])#, color=uv_options['color'])
+        # ax.tick_params(axis='y', labelcolor=uv_options['color'])
         minorlocator=AutoMinorLocator(5) 
         ax.xaxis.set_minor_locator(minorlocator)
         handles.append(uv_line)
@@ -246,8 +246,8 @@ class SingleMode(QDialog):
                     line, = new_ax.plot(x, y, label=label, color=color, linestyle=linestyle, linewidth=linewidth)
                 except Exception as e:
                     print("Error plotting curve:", e)
-                new_ax.set_ylabel(ylabel, color=color)
-                new_ax.tick_params(axis='y', labelcolor=color)
+                new_ax.set_ylabel(ylabel)#, color=color)
+                # new_ax.tick_params(axis='y', labelcolor=color)
 
                 handles.append(line)
                 labels.append(label)
@@ -287,7 +287,7 @@ class SingleMode(QDialog):
             # Reset plot-related variables to their defaults
             self.loaded_file = None
             self.data = None
-            self.selected_curves = {'UV': {'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'UV (mAU)', 'label': 'UV'}}
+            self.selected_curves = {'UV': {'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'Absorbance (mAU)', 'label': 'UV'}}
             self.shaded_regions = []
             self.show_shaded_fractions = False
             self.show_legend = False
@@ -622,7 +622,7 @@ class SelectCurvesDialog(QDialog):
         # Add custom y-label input for UV
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
-        ylabel_edit.setText(self.parent.selected_curves['UV'].get('ylabel', 'UV (mAU)'))
+        ylabel_edit.setText(self.parent.selected_curves['UV'].get('ylabel', 'Absorbance (mAU)'))
         ylabel_edit.editingFinished.connect(lambda c='UV': self.handle_ylabel_change(c, ylabel_edit.text()))
         self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
 
@@ -1045,11 +1045,9 @@ class AnalyseDialog(QDialog):
         self.slider.setEnabled(False)  # Initially disabled until checkbox is checked
         self.layout.addWidget(self.slider)
 
-        # Add text box for displaying y-values
-        self.y_values_display = QTextEdit()
-        self.y_values_display.setReadOnly(True)
-        self.y_values_display.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.y_values_display.setFixedHeight(100) 
+        self.y_values_display = QLabel()
+        self.y_values_display.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.y_values_display.setWordWrap(True)
         self.layout.addWidget(self.y_values_display)
 
         # Connect signals
@@ -1071,7 +1069,6 @@ class AnalyseDialog(QDialog):
         else:
             self.slider.setEnabled(False)
             self.remove_vertical_marker()
-
 
     def add_vertical_marker(self):
         ax1 = self.parent.ax1
@@ -1105,7 +1102,6 @@ class AnalyseDialog(QDialog):
 
         # Force a redraw of the canvas to display the marker immediately
         self.parent.canvas.draw()
-
 
     def remove_vertical_marker(self):
         if self.marker_line:
@@ -1147,7 +1143,6 @@ class AnalyseDialog(QDialog):
                     y_value = np.interp(x_value, x_data, y_data)
                     y_values[label] = y_value
 
-        # Prepare the text to display in the format you want
         y_values_str = f"Marker Position: {x_value:.2f} mL\n"  # Show the current volume at the top
-        y_values_str += "\n".join([f"{label}: {y:.2f}" for label, y in y_values.items()])
+        y_values_str += "\n".join([f"{label}: {y:.2f} mAU" for label, y in y_values.items()])
         self.y_values_display.setText(y_values_str)
