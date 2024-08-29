@@ -8,7 +8,7 @@
 - **Overlay Mode**: Compare multiple datasets by overlaying them on the same plot, with full customisation of each trace. Particularly suited to analytical size-exclusion chromatograms.
 - **Analysis**: You can currently add a vertical marker to your plots to measure values at specific curve positions. This a work in progress, and other analytical tools will be added in the future.
 
-A guide on how to use the features of ChromaPlot is provided within the app, however if you have any questions or need help, please reach out to us via [GitHub](https://github.com/beh22/ChromaPlot) or [email](mailto:billyehobbs@gmail.com).
+A guide on how to use the features of ChromaPlot is provided within the app, however if you have any questions or need help, please reach out to us via [GitHub](https://github.com/beh22/ChromaPlot/issues) or [email](mailto:billyehobbs@gmail.com).
 
 ## Installation
 
@@ -25,6 +25,22 @@ To intall ChromaPlot, follow these steps:
 1. Download the latest `.dmg` file from the [releases](https://github.com/beh22/ChromaPlot/releases) section.
 2. Open the `.dmg` file and drag the ChromaPlot icon to your Applications folder.
 3. Open ChromaPlot from the Applications folder or Launchpad.
+
+**Important Information for macOS Users**: Since ChromaPlot is not signed with an Apple-issued certificate, you may encounter a warning when attempting to open the application. This is because Apple cannot verify that the app is from a trusted developer.
+
+**To Open ChromaPlot:**
+
+1. After downloading the `.dmg` file, double-click it to open.
+2. Drag the ChromaPlot app to your Applications folder.
+3. Attempt to open the app by double-clicking it.
+4. If you see a warning stating that the app is from an unidentified developer, follow these steps:
+   - Go to **System Preferences** > **Security & Privacy** > **General**.
+   - Click the "Open Anyway" button near the message about ChromaPlot.
+   - Confirm that you want to open the app in the dialog box that appears.
+
+**Disclaimer**: While we have taken steps to ensure that ChromaPlot is safe and secure, the app has not been officially notarized by Apple. If you have any concerns about security, feel free to review the source code available in this repository or run from the source code as described below.
+
+**Why This Happens**: Apple's security system, Gatekeeper, protects users by ensuring that only apps from identified developers are installed without extra steps. To become an identified developer, a paid Apple Developer account is required, which is not feasible for every open-source project.
 
 ### From Source:
 
@@ -49,7 +65,7 @@ If you would prefer to run ChromaPlot from the source code:
 
 ## Updating ChromaPlot
 
-ChromaPlot will automatically check for updates each time it is launched. If a new version is available, you will be prompted to update and taken to the [releases](https://github.com/beh22/ChromaPlot/releases) page to download the latest update.
+ChromaPlot will automatically check for updates each time it is launched. If a new version is available, you will be prompted to update and taken to the [releases](https://github.com/beh22/ChromaPlot/releases) page to download the latest update. Download the latest version as above and when prompted, choose to 'Replace' the existing install.
 
 ## Contributing
 
