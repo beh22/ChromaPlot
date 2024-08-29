@@ -1,3 +1,0 @@
-logo background: #3e3e3e (grey)
-logo curve: #d34333 (red)
-logo text: #d39333 (yellowish)

@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
 import numpy as np
-import AKdatafile as AKdf
 
-from help_dialogs import MainHelpDialog
+from chromaplot.AKdatafile import AKdatafile as AKdf
+from chromaplot.help_dialogs import MainHelpDialog
 
 
 class SingleMode(QDialog):

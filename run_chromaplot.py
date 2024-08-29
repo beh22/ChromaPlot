@@ -1,0 +1,4 @@
+from chromaplot.main import main
+
+if __name__ == "__main__":
+    main()

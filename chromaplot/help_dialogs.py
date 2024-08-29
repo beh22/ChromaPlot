@@ -125,7 +125,7 @@ class MainHelpDialog(QDialog):
         """ Helper function to find the logo resource path. """
         if hasattr(sys, '_MEIPASS'):
             return os.path.join(sys._MEIPASS, relative_path)
-        return os.path.join(os.path.abspath("./resources/"), relative_path)
+        return os.path.join(os.path.abspath("./chromaplot/resources/"), relative_path)
 
 class SingleModeHelpDialog(QDialog):
     def __init__(self, parent=None):

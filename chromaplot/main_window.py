@@ -7,10 +7,11 @@ Authors: Billy Hobbs and Felipe Ossa
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QWidget
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
-from single_mode import SingleMode
-from overlay_mode import OverlayMode
 import sys
 import os
+
+from chromaplot.single_mode import SingleMode
+from chromaplot.overlay_mode import OverlayMode
 
 class MainWindow(QMainWindow):
     def __init__(self, version):
@@ -120,7 +121,7 @@ class MainWindow(QMainWindow):
     def resource_path(self, relative_path):
         if hasattr(sys, '_MEIPASS'):
             return os.path.join(sys._MEIPASS, relative_path)
-        return os.path.join(os.path.abspath("./resources/"), relative_path)
+        return os.path.join(os.path.abspath("./chromaplot/resources/"), relative_path)
 
     def single_mode(self):
         self.single_mode_dialog = SingleMode("Single Mode", self)

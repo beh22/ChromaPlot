@@ -6,8 +6,9 @@ Authors: Billy Hobbs and Felipe Ossa
 
 import sys
 from PyQt5.QtWidgets import QApplication
-from main_window import MainWindow
-from update_checker import check_for_updates, prompt_for_update
+
+from chromaplot.main_window import MainWindow
+from chromaplot.update_checker import check_for_updates, prompt_for_update
 
 '''
 To do:
@@ -126,13 +127,17 @@ QRadioButton {
 
 """
 
-
-version = '0.1.0'
+CURRENT_VERSION = '0.1.0'
 
 def main():
     app = QApplication(sys.argv)
     app.setStyleSheet(global_stylesheet)
-    window = MainWindow(version)
+
+    latest_release = check_for_updates(CURRENT_VERSION)
+    if latest_release:
+        prompt_for_update(latest_release)
+
+    window = MainWindow(CURRENT_VERSION)
     window.show()
     sys.exit(app.exec_())
 
