@@ -1,6 +1,6 @@
-# ChromaPlot
+# <img src="chromaplot/resources/cp_logo.png" alt="ChromaPlot logo" width="300" />
 
-**ChromaPlot** is a Python application designed for creating high-quality figures of chromatogram data from Cytiva ÄKTA systems. It provides an easy-to-use interface for visualising and analysing your chromatographic data.
+**ChromaPlot** is a Python desktop application designed for creating high-quality figures of chromatogram data from Cytiva ÄKTA systems. It provides an easy-to-use interface for visualising and analysing your chromatographic data.
 
 ## Features
 
@@ -8,7 +8,7 @@
 - **Overlay Mode**: Compare multiple datasets by overlaying them on the same plot, with full customisation of each trace. Particularly suited to analytical size-exclusion chromatograms.
 - **Analysis**: You can currently add a vertical marker to your plots to measure values at specific curve positions. This a work in progress, and other analytical tools will be added in the future.
 
-A guide on how to use the features of ChromaPlot is provided within the app, however if you have any questions or need help, please reach out to us via [GitHub](https://github.com/beh22/ChromaPlot/issues) or [email](mailto:billyehobbs@gmail.com).
+A guide on how to use the features of ChromaPlot is provided within the app, however if you have any questions or need help, please [contact us](#support--contact-information)
 
 ## Installation
 
@@ -20,13 +20,39 @@ To intall ChromaPlot, follow these steps:
 2. Run the installer and follow the on-screen instructions.
 3. Once installed, you can start ChromaPlot from the Start Menu or desktop shortcut.
 
+<details>
+   <summary><b>Important Information for Windows Users</b></summary>
+
+ChromaPlot is provided as a pre-packaged desktop application for ease of use, allowing you to run the software without needing to install Python and the necessary dependencies on your system.
+
+Because ChromaPlot is not signed with a code-signing certificate from a trusted Certificate Authority, you may encounter a Windows Defender SmartScreen warning when you try to run the application.
+
+**To Open ChromaPlot on Windows:**
+
+1. Download the installer or executable file from the repository.
+2. Double-click the file to start the installation.
+3. If you see a warning from Windows Defender SmartScreen, follow these steps:
+   - Click on "More info" in the warning dialog.
+   - Click the "Run anyway" button to proceed with the installation or to run the application.
+
+**Disclaimer**: While we have taken steps to ensure that ChromaPlot is safe and secure, the app is not signed with a code-signing certificate. If you have any concerns about security, feel free to review the source code available in this repository or run from the source code as described below.
+
+**Why This Happens**: Windows Defender SmartScreen is designed to protect users from potentially harmful software by warning them when running apps from unknown publishers. Obtaining a code-signing certificate to bypass this warning can be costly, which is why it hasn't been implemented for this project.
+
+If you have any questions or encouter issues, please [contact us](#support--contact-information).
+
+</details>
+
 ### For macOS:
 
 1. Download the latest `.dmg` file from the [releases](https://github.com/beh22/ChromaPlot/releases) section.
 2. Open the `.dmg` file and drag the ChromaPlot icon to your Applications folder.
 3. Open ChromaPlot from the Applications folder or Launchpad.
 
-**Important Information for macOS Users**: Since ChromaPlot is not signed with an Apple-issued certificate, you may encounter a warning when attempting to open the application. This is because Apple cannot verify that the app is from a trusted developer.
+<details>
+   <summary><b>Important Information for macOS Users</b></summary>
+
+Since ChromaPlot is not signed with an Apple-issued certificate, you may encounter a warning when attempting to open the application. This is because Apple cannot verify that the app is from a trusted developer.
 
 **To Open ChromaPlot:**
 
@@ -41,6 +67,10 @@ To intall ChromaPlot, follow these steps:
 **Disclaimer**: While we have taken steps to ensure that ChromaPlot is safe and secure, the app has not been officially notarized by Apple. If you have any concerns about security, feel free to review the source code available in this repository or run from the source code as described below.
 
 **Why This Happens**: Apple's security system, Gatekeeper, protects users by ensuring that only apps from identified developers are installed without extra steps. To become an identified developer, a paid Apple Developer account is required, which is not feasible for every open-source project.
+
+If you have any questions or encouter issues, please [contact us](#support--contact-information).
+
+</details>
 
 ### From Source:
 
@@ -60,12 +90,24 @@ If you would prefer to run ChromaPlot from the source code:
    ```
 4. Run the application:
    ```bash
-   python main.py
+   python run_chromaplot.py
    ```
 
 ## Updating ChromaPlot
 
-ChromaPlot will automatically check for updates each time it is launched. If a new version is available, you will be prompted to update and taken to the [releases](https://github.com/beh22/ChromaPlot/releases) page to download the latest update. Download the latest version as above and when prompted, choose to 'Replace' the existing install.
+ChromaPlot will automatically check for updates each time it is launched. If a new version is available, you will be prompted to update and taken to the [releases](https://github.com/beh22/ChromaPlot/releases) page to download the latest update. Download the latest version as described above and when prompted, choose to 'Replace' the existing install.
+
+## Acknowledgements
+
+We hope that ChromaPlot makes it easier to create high-quality chromatogram figures. While it is not required, if you use ChromaPlot to generate figures for publications, presentations, or other publicly shared works, we would greatly appreciate a mention or acknowledgement.
+
+**How to Acknowledge ChromaPlot**:
+
+- You could include a simple statement in your figure legend or acknowledgements section, such as:
+  - "Figures generated using ChromaPlot (Version X.X.X)."
+  - We acknowledge the use of ChromaPlot (Version X.X.X) for generating chromatogram figures."
+
+By including this, you help spread the word about ChromaPlot which would be much appreciated!
 
 ## Contributing
 
@@ -92,4 +134,22 @@ This repository contains the source code for ChromaPlot, which is licensed under
 
 **Note**: The ChromaPlot executable, branding, and logos are copyrighted and are not covered by the open-source license. The use of these elements is restricted and may require a separate license.
 
-For more information on licensing and usage, please contact Billy at [billyehobbs@gmail.com](mailto:billyehobbs@gmail.com).
+For more information on licensing and usage, please [contact us](#support--contact-information).
+
+## Support / Contact Information
+
+### 1. **Reporting Issues**
+
+- If you encounter and bugs, issues, or have feature requests, please report them on the [GitHub Issues](https://github.com/beh22/ChromaPlot/issues) page. Make sure to provide as much detail as possible, including:
+  - Steps to reproduce the issue
+  - Screenshots, if applicable
+  - The version of ChromaPlot you are using
+  - You operating system
+
+### 2. **Contact**
+
+- If you need to reach out directly for support or have any inquiries, feel free to contact us:
+  - **Billy Hobbs**: [billyehobbs@gmail.com](mailto:billyehobbs@gmail.com)
+  - When contacting via email, please include "ChromaPlot" in the subject line
+
+We aim to respond to issues and inquiries within 48 hours.
