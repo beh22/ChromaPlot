@@ -93,13 +93,20 @@ class MainHelpDialog(QDialog):
         github_link.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(github_link)
 
+        about_button_layout = QHBoxLayout()
+        about_button_layout.setAlignment(Qt.AlignCenter)
+        about_button = QPushButton("About")
+        about_button_layout.addWidget(about_button)
+        about_button.clicked.connect(self.open_about_dialog)
+        main_layout.addLayout(about_button_layout)
+
         # Add a copyright label at the bottom
-        copyright_label = QLabel("© 2024 Billy Hobbs. All rights reserved.")
-        copyright_label.setAlignment(Qt.AlignCenter)
-        copyright_label.setStyleSheet("font-size: 10px; color: grey;")
+        # copyright_label = QLabel("© 2024 Billy Hobbs. All rights reserved.")
+        # copyright_label.setAlignment(Qt.AlignCenter)
+        # copyright_label.setStyleSheet("font-size: 10px; color: grey;")
 
         # Add copyright label to the main layout
-        main_layout.addWidget(copyright_label)
+        # main_layout.addWidget(copyright_label)
 
         self.setLayout(main_layout)
 
@@ -126,6 +133,12 @@ class MainHelpDialog(QDialog):
         if hasattr(sys, '_MEIPASS'):
             return os.path.join(sys._MEIPASS, relative_path)
         return os.path.join(os.path.abspath("./chromaplot/resources/"), relative_path)
+    
+    def open_about_dialog(self):
+        about_dialog = AboutDialog(self)
+        about_dialog.exec_()
+        # about_dialog.show()
+
 
 class SingleModeHelpDialog(QDialog):
     def __init__(self, parent=None):
@@ -152,14 +165,14 @@ class SingleModeHelpDialog(QDialog):
         general_label.setWordWrap(True)
         general_label.setText(
             "<h2>Single Mode</h2>"
-            "<p>This is Single Mode, where you can load a single dataset, customise your plot, "
-            "analyse it with various tools (more to come), and export it to create high-quality figures.</p>"
+            "<p>This is Single Mode, where you can load a single dataset,  customise your plot,  "
+            "analyse it with various tools (more to come),  and export it to create high-quality figures.</p>"
             "<p>Here’s a quick overview of the features:</p>"
             "<ul>"
             "<li><b>Load Data:</b> Import your dataset to start plotting.</li>"
             "<li><b>Clear Data:</b> Remove the current dataset and reset the plot.</li>"
             "<li><b>Save Plot:</b> Save the current plot as an image file.</li>"
-            "<li><b>Display Options:</b> Customise plot settings, such as axis limits, figure legend, and shaded areas.</li>"
+            "<li><b>Display Options:</b> Customise plot settings, such as axis limits,  figure legend,  and shaded areas.</li>"
             "<li><b>Select Curves:</b> Choose which curves to display and customise their appearance.</li>"
             "<li><b>Analyse:</b> Tools for deeper analysis of your data.</li>"
             "</ul>"
@@ -178,16 +191,16 @@ class SingleModeHelpDialog(QDialog):
         plotting_label.setWordWrap(True)
         plotting_label.setText(
             "<h2>Plotting in Single Mode</h2>"
-            "<p><b>Load Data:</b> Click 'Load Data' and navigate to select the dataset you would like to plot. "
-            "The file to load should be one exported from UNICORN and have .txt, .asc, or .csv file extensions. "
+            "<p><b>Load Data:</b> Click 'Load Data' and navigate to select the dataset you would like to plot.  "
+            "The file to load should be one exported from UNICORN and have .txt,  .asc,  or .csv file extensions.  "
             "Exports from multiple versions of UNICORN are supported.</p>"
-            "<p>Once loaded, the UV curve from the dataset will be automatically plotted. "
+            "<p>Once loaded, the UV curve from the dataset will be automatically plotted.  "
             "You can add other curves by selecting the checkboxes in the 'Select Curves' window.</p>"
-            "<p><b>Customise Curves:</b> In the 'Select Curves' window, you can choose the line style, line width, and "
-            "colour of each curve. You can also choose the y-axis label and the label used in the figure legend for each curve.</p>"
+            "<p><b>Customise Curves:</b> In the 'Select Curves' window, you can choose the line style,  line width, and  "
+            "colour of each curve.  You can also choose the y-axis label and the label used in the figure legend for each curve.</p>"
             "<p>Further customisation of the plot can be achieved using the 'Display Options' window.</p>"
             "<p><b>Save Plot:</b> When you are happy with the appearance of your plot, press 'Save Plot'. "
-            "Plots can be saved as .pdf, .png, or .jpg files.</p>"
+            "Plots can be saved as .pdf,  .png,  or .jpg files.</p>"
         )
 
         layout.addWidget(plotting_label)
@@ -205,16 +218,16 @@ class SingleModeHelpDialog(QDialog):
             "<h2>Display Options</h2>"
             "<p>The 'Display Options' window allows you to fine-tune the appearance of your plot:</p>"
             "<ul>"
-            "<li><b>Add Legend:</b> Toggle the display of the legend on the plot. You can place the legend above the plot "
+            "<li><b>Add Legend:</b> Toggle the display of the legend on the plot.  You can place the legend above the plot "
             "or in the 'best-fit' location as determined by Matplotlib.</li>"
-            "<li><b>Add Fraction Labels:</b> If fractions were collected for this dataset, you can display their locations on the plot. "
+            "<li><b>Add Fraction Labels:</b> If fractions were collected for this dataset,  you can display their locations on the plot.  "
             "This is useful for determining which areas to shade if desired.</li>"
-            "<li><b>Define Limits:</b> Manually set the minimum and maximum values for the x and y axes. "
+            "<li><b>Define Limits:</b> Manually set the minimum and maximum values for the x and y axes.  "
             "You can apply these settings or reset them to the default range defined by the size of the dataset.</li>"
-            "<li><b>Shading:</b> Highlight specific regions of the UV plot by shading them. "
+            "<li><b>Shading:</b> Highlight specific regions of the UV plot by shading them.  "
             "You can shade by fractions or specific volumes, and customise the colour and transparency of the shading. "
-            "You can undo the last shaded area or clear all shading."
-            "<i>Note:</i> Shading by fractions for datasets where fractions were collected in 96-well plates is not currently supported. "
+            "You can undo the last shaded area or clear all shading.  "
+            "<i>Note:</i> Shading by fractions for datasets where fractions were collected in 96-well plates is not currently supported.  "
             "However, you can still display fraction labels and shade by volume based on this.</li>"
         )
 
@@ -233,8 +246,8 @@ class SingleModeHelpDialog(QDialog):
             "<h2>Analysis</h2>"
             "<p>The 'Analyse' button provides tools to investigate your data more closely:</p>"
             "<ul>"
-            "<li><b>Vertical Marker:</b> Place a vertical line on the plot to mark a specific volume. "
-            "You can move this marker across the x-axis to see the corresponding y-values for each curve. "
+            "<li><b>Vertical Marker:</b> Place a vertical line on the plot to mark a specific volume.  "
+            "You can move this marker across the x-axis to see the corresponding y-values for each curve.  "
             "As you move the vertical marker, the y-values for all displayed curves at that specific volume are shown.</li>"
             "</ul>"
             "<p>More tools will be added to 'Analyse' in the future.</p>"
@@ -244,6 +257,7 @@ class SingleModeHelpDialog(QDialog):
         layout.addStretch()
         analysis_tab.setLayout(layout)
         return analysis_tab
+
 
 class OverlayModeHelpDialog(QDialog):
     def __init__(self, parent=None):
@@ -270,7 +284,7 @@ class OverlayModeHelpDialog(QDialog):
         general_label.setWordWrap(True)
         general_label.setText(
             "<h2>Overlay Mode</h2>"
-            "<p>This is Overlay Mode, where you can load multiple datasets to easily compare them. "
+            "<p>This is Overlay Mode, where you can load multiple datasets to easily compare them.  "
             "They can then be customised, and the plot exported to create high-quality figures.</p>"
             "<p>Here’s a quick overview of the features:</p>"
             "<ul>"
@@ -295,18 +309,18 @@ class OverlayModeHelpDialog(QDialog):
         plotting_label.setWordWrap(True)
         plotting_label.setText(
             "<h2>Plotting in Overlay Mode</h2>"
-            "<p><b>Load Data:</b> Multiple datasets can be loadeded at once. "
-            "Click 'Load Data' and navigate to select datasets you would like to plot. "
-            "The files to load should be one exported from UNICORN and have .txt, .asc, or .csv file extensions. "
+            "<p><b>Load Data:</b> Multiple datasets can be loadeded at once.  "
+            "Click 'Load Data' and navigate to select datasets you would like to plot.  "
+            "The files to load should be one exported from UNICORN and have .txt,  .asc,  or .csv file extensions.  "
             "Exports from multiple versions of UNICORN are supported.</p>"
-            "<p>Once loaded, the UV curve from the dataset will be automatically plotted. "
+            "<p>Once loaded, the UV curve from the dataset will be automatically plotted.  "
             "To overlay a new dataset, select this dataset through 'Load Data' and it will automatically be added.</p>"
-            "<p><b>Customise Curves:</b> In the 'Select Curves' window, you can toggle which curves are currently "
-            "being shown on the plot using the checkboxes. You can also choose the line style, line width, and colour of each curve. "
+            "<p><b>Customise Curves:</b> In the 'Select Curves' window, you can toggle which curves are currently  "
+            "being shown on the plot using the checkboxes.  You can also choose the line style,  line width,  and colour of each curve.  "
             "You can also choose the label used in the figure legend for each dataset.</p>"
             "<p>Further customisation of the plot can be achieved using the 'Display Options' window.</p>"
-            "<p><b>Save Plot:</b> When you are happy with the appearance of your plot, press 'Save Plot'. "
-            "Plots can be saved as .pdf, .png, or .jpg files.</p>"
+            "<p><b>Save Plot:</b> When you are happy with the appearance of your plot,  press 'Save Plot'.  "
+            "Plots can be saved as .pdf,  .png,  or .jpg files.</p>"
         )
 
         layout.addWidget(plotting_label)
@@ -363,3 +377,24 @@ class OverlayModeHelpDialog(QDialog):
         layout.addStretch()
         analysis_tab.setLayout(layout)
         return analysis_tab
+
+
+class AboutDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("About ChromaPlot")
+
+        layout = QVBoxLayout()
+
+        about_text = QLabel(
+            "ChromaPlot Version 0.1.0\n\n"
+            "Authors: Billy Hobbs and Felipe Ossa\n"
+            "© 2024 Billy Hobbs.  All rights reserved.\n\n"
+            "ChromaPlot is a tool for creating high-quality chromatogram figures.\n\n"
+            "For more information,  please visit our GitHub repository."
+        )
+        about_text.setAlignment(Qt.AlignLeft)
+        about_text.setWordWrap(True)
+        layout.addWidget(about_text)
+
+        self.setLayout(layout)
