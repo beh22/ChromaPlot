@@ -4,7 +4,7 @@ Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
 
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QWidget
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QWidget, QDialog
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 import sys
@@ -16,8 +16,6 @@ from chromaplot.overlay_mode import OverlayMode
 class MainWindow(QMainWindow):
     def __init__(self, version):
         super().__init__()
-        # self.initUI()
-
         self.setWindowTitle("ChromaPlot")
 
         # Create the main layout
@@ -92,13 +90,20 @@ class MainWindow(QMainWindow):
         github_link.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(github_link)
 
+        about_button_layout = QHBoxLayout()
+        about_button_layout.setAlignment(Qt.AlignCenter)
+        about_button = QPushButton("About")
+        about_button_layout.addWidget(about_button)
+        about_button.clicked.connect(self.open_about_dialog)
+        main_layout.addLayout(about_button_layout)
+
         # Add a copyright label at the bottom
-        copyright_label = QLabel("© 2024 Billy Hobbs. All rights reserved.")
-        copyright_label.setAlignment(Qt.AlignCenter)
-        copyright_label.setStyleSheet("font-size: 10px; color: grey;")
+        # copyright_label = QLabel("© 2024 Billy Hobbs. All rights reserved.")
+        # copyright_label.setAlignment(Qt.AlignCenter)
+        # copyright_label.setStyleSheet("font-size: 10px; color: grey;")
 
         # Add copyright label to the main layout
-        main_layout.addWidget(copyright_label)        
+        # main_layout.addWidget(copyright_label)        
 
         # Set the layout to a central widget
         container = QWidget()
@@ -108,15 +113,6 @@ class MainWindow(QMainWindow):
         # Connect the buttons to their respective methods
         self.single_mode_button.clicked.connect(self.single_mode)
         self.overlay_mode_button.clicked.connect(self.overlay_mode)
-
-    # def initUI(self):
-    #     self.setWindowTitle('ChromaPlot')
-    #     self.setGeometry(100, 100, 800, 600)
-
-    #     # Check for updates on startup
-    #     latest_release = check_for_updates()
-    #     if latest_release:
-    #         prompt_for_update(latest_release)
 
     def resource_path(self, relative_path):
         if hasattr(sys, '_MEIPASS'):
@@ -132,3 +128,28 @@ class MainWindow(QMainWindow):
         self.overlay_mode_dialog = OverlayMode(self)
         self.hide()
         self.overlay_mode_dialog.exec_()
+
+    def open_about_dialog(self):
+        about_dialog = AboutDialog(self)
+        about_dialog.exec_()
+        # about_dialog.show()
+
+class AboutDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("About ChromaPlot")
+
+        layout = QVBoxLayout()
+
+        about_text = QLabel(
+            "ChromaPlot Version 0.1.0\n\n"
+            "Authors: Billy Hobbs and Felipe Ossa\n"
+            "© 2024 Billy Hobbs.  All rights reserved.\n\n"
+            "ChromaPlot is a tool for creating high-quality chromatogram figures.\n\n"
+            "For more information,  please visit our GitHub repository."
+        )
+        about_text.setAlignment(Qt.AlignLeft)
+        about_text.setWordWrap(True)
+        layout.addWidget(about_text)
+
+        self.setLayout(layout)

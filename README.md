@@ -134,6 +134,14 @@ This repository contains the source code for ChromaPlot, which is licensed under
 
 **Note**: The ChromaPlot executable, branding, and logos are copyrighted and are not covered by the open-source license. The use of these elements is restricted and may require a separate license.
 
+If you wish to use the ChromaPlot executable, branding, or logos beyond personal use, please contact us to discuss licensing options.
+
+### Copyright Notices
+
+- **Source Code:** Copyright notices are included at the top of each source code file.
+- **Application:** Copyright information is available in the "About" section of the application.
+- **Logo:** The ChromaPlot logo is copyrighted and should not be used without permission.
+
 For more information on licensing and usage, please [contact us](#support--contact-information).
 
 ## Support / Contact Information
