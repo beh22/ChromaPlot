@@ -17,8 +17,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
 import numpy as np
+import os
 
-from chromaplot.AKdatafile import AKdatafile as AKdf
+from chromaplot.AKdatafile import AKdatafile
 from chromaplot.help_dialogs import MainHelpDialog
 
 
@@ -142,15 +143,18 @@ class SingleMode(QDialog):
             options=options
         )
         if file_name:
-            print(f"File loaded: {file_name}")
-            self.loaded_file = file_name
-            self.data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
+            try:
+                print(f"File loaded: {file_name}")
+                self.loaded_file = file_name
+                self.data = AKdatafile(file_name).genAKdict(1, 2)
 
-            # Reopen the SelectCurvesDialog with the new data
-            self.open_select_curves_dialog()
+                # Reopen the SelectCurvesDialog with the new data
+                self.open_select_curves_dialog()
 
-            # Update the plot with the new data
-            self.update_plot()
+                # Update the plot with the new data
+                self.update_plot()
+            except Exception as e:
+                QMessageBox.critical(self, "Error Loading Data", f"An error occurred while loading '{os.path.basename(file_name)}'.  Please check that it has the correct format.")
 
     def open_select_curves_dialog(self):
         if not self.is_data_loaded():
@@ -560,6 +564,7 @@ class SingleMode(QDialog):
 
         self.help_dialog.show()
 
+
 class SelectCurvesDialog(QDialog):
     curveOptionsChanged = pyqtSignal(dict)
 
@@ -576,8 +581,9 @@ class SelectCurvesDialog(QDialog):
         excluded_curves = {'Injection', 'Run Log', 'Fraction', 'UV_CUT_TEMP@100,BASEM'}
         keys = [x for x in self.curves]
 
-        # Initialise row counter for grid layout
-        self.current_row = 0
+        self.add_column_headers()
+
+        self.current_row = 1
 
         # Controls for UV curve
         self.setup_uv_controls()
@@ -589,14 +595,23 @@ class SelectCurvesDialog(QDialog):
         # Add grid layout to main layout
         self.main_layout = QVBoxLayout()
         self.main_layout.addLayout(self.grid_layout)
+        self.main_layout.setContentsMargins(8, 8, 8, 8)
         self.setLayout(self.main_layout)
 
         self.update_controls()
 
+    def add_column_headers(self):
+        self.grid_layout.addWidget(QLabel(""), 0, 0)
+        self.grid_layout.addWidget(QLabel("Line\nStyle"), 0, 1)
+        self.grid_layout.addWidget(QLabel("Line\nWidth"), 0, 2)
+        self.grid_layout.addWidget(QLabel("Y-Label"), 0, 3)
+        self.grid_layout.addWidget(QLabel("Legend Label"), 0, 4)
+
     def setup_uv_controls(self):
         # UV checkbox and label
-        uv_label = QLabel('UV:')
+        uv_label = QLabel('UV :')
         self.grid_layout.addWidget(uv_label, self.current_row, 0)
+
         # Add linestyle options for UV
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
@@ -614,24 +629,29 @@ class SelectCurvesDialog(QDialog):
         linewidth_box.valueChanged.connect(lambda value, c='UV': self.handle_linewidth_change(c)(value))
         self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
 
-        # Add color picker for UV
-        color_button = QPushButton("Colour")
-        color_button.clicked.connect(lambda _, c='UV': self.handle_color_change(c)())
-        self.grid_layout.addWidget(color_button, self.current_row, 3)
-
         # Add custom y-label input for UV
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
         ylabel_edit.setText(self.parent.selected_curves['UV'].get('ylabel', 'Absorbance (mAU)'))
         ylabel_edit.editingFinished.connect(lambda c='UV': self.handle_ylabel_change(c, ylabel_edit.text()))
-        self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 3)
 
         # Add label input for UV
         label_input = QLineEdit()
         label_input.setPlaceholderText("Legend Label")
         label_input.setText(self.parent.selected_curves['UV'].get('label', 'UV'))
         label_input.editingFinished.connect(lambda: self.handle_label_change('UV', label_input.text()))
-        self.grid_layout.addWidget(label_input, self.current_row, 5)
+        self.grid_layout.addWidget(label_input, self.current_row, 4)
+
+        color_label = QLabel("Colour:")
+        self.grid_layout.addWidget(color_label, self.current_row, 5)
+
+        color_box = QLabel()
+        color_box.setFixedSize(20, 20)
+        current_color = self.parent.selected_curves['UV'].get('color', 'black')
+        color_box.setStyleSheet(f"background-color: {current_color}; border: 1px solid black;")
+        color_box.mousePressEvent = lambda event, c='UV', box=color_box: self.handle_color_change(c, box)
+        self.grid_layout.addWidget(color_box, self.current_row, 6)
 
         self.current_row += 1
 
@@ -663,24 +683,29 @@ class SelectCurvesDialog(QDialog):
         linewidth_box.valueChanged.connect(lambda value, c=curve: self.handle_linewidth_change(c)(value))
         self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
 
-        # Add color picker button
-        color_button = QPushButton("Colour")
-        color_button.clicked.connect(lambda _, c=curve: self.handle_color_change(c)())
-        self.grid_layout.addWidget(color_button, self.current_row, 3)
-
         # Add custom y-label input for curve
         ylabel_edit = QLineEdit()
         ylabel_edit.setPlaceholderText("Y label")
         ylabel_edit.setText(self.parent.selected_curves.get(curve, {}).get('ylabel', curve))
         ylabel_edit.editingFinished.connect(lambda c=curve: self.handle_ylabel_change(c, ylabel_edit.text()))
-        self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 3)
 
         # Add label input for the curve
         label_input = QLineEdit()
         label_input.setPlaceholderText("Legend Label")
         label_input.setText(self.parent.selected_curves.get(curve, {}).get('label', curve))
         label_input.editingFinished.connect(lambda: self.handle_label_change(curve, label_input.text()))
-        self.grid_layout.addWidget(label_input, self.current_row, 5)
+        self.grid_layout.addWidget(label_input, self.current_row, 4)
+
+        color_label = QLabel("Colour:")
+        self.grid_layout.addWidget(color_label, self.current_row, 5)
+
+        color_box = QLabel()
+        color_box.setFixedSize(20, 20)
+        current_color = self.parent.selected_curves.get(curve, {}).get('color', 'black')
+        color_box.setStyleSheet(f"background-color: {current_color}; border: 1px solid black;")
+        color_box.mousePressEvent = lambda event, c=curve, box=color_box: self.handle_color_change(c, box)
+        self.grid_layout.addWidget(color_box, self.current_row, 6)
 
         self.current_row += 1
 
@@ -712,14 +737,13 @@ class SelectCurvesDialog(QDialog):
         self.curve_options[curve]['ylabel'] = ylabel if ylabel else curve
         self.update_curve_selection(None)
 
-    def handle_color_change(self, curve):
-        def inner_handle_color_change():
-            color = QColorDialog.getColor(Qt.black, self, "Select Color for " + curve)
-            if color.isValid():
-                color_name = color.name()
-                self.curve_options[curve]['color'] = color_name
-                self.update_curve_selection(None)
-        return inner_handle_color_change
+    def handle_color_change(self, curve, color_box):
+        color = QColorDialog.getColor(Qt.black, self, "Select Color for " + curve)
+        if color.isValid():
+            color_name = color.name()
+            self.curve_options[curve]['color'] = color_name
+            color_box.setStyleSheet(f"background-color: {color_name}; border: 1px solid black;")
+            self.update_curve_selection(None)
     
     def handle_label_change(self, curve, label):
         self.curve_options[curve]['label'] = label if label else curve
@@ -743,6 +767,7 @@ class SelectCurvesDialog(QDialog):
             if curve in self.checkboxes:
                 self.checkboxes[curve].setChecked(True)
                 self.curve_options[curve] = options
+
 
 
 class OptionsDialog(QDialog):

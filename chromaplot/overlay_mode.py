@@ -19,7 +19,7 @@ from matplotlib.ticker import AutoMinorLocator
 import numpy as np
 import os
 
-from chromaplot.AKdatafile import AKdatafile as AKdf
+from chromaplot.AKdatafile import AKdatafile
 from chromaplot.help_dialogs import MainHelpDialog
 
 
@@ -128,18 +128,22 @@ class OverlayMode(QDialog):
         )
         if file_names:
             for file_name in file_names:
-                dataset_name = os.path.basename(file_name)
-                data = AKdf.AKdatafile(file_name).genAKdict(1, 2)
+                try:
+                    dataset_name = os.path.basename(file_name)
+                    data = AKdatafile(file_name).genAKdict(1, 2)
 
-                if dataset_name not in self.plot_settings and dataset_name not in self.stored_plot_settings:
-                    self.plot_settings[dataset_name] = {
-                        'linestyle': '-',
-                        'linewidth': 1.5,
-                        'color': 'black',
-                        'label': dataset_name
-                    }
+                    if dataset_name not in self.plot_settings and dataset_name not in self.stored_plot_settings:
+                        self.plot_settings[dataset_name] = {
+                            'linestyle': '-',
+                            'linewidth': 1.5,
+                            'color': 'black',
+                            'label': dataset_name
+                        }
 
-                self.loaded_datasets[dataset_name] = data
+                    self.loaded_datasets[dataset_name] = data
+                except Exception as e:
+                    QMessageBox.critical(self, "Error Loading Data", f"An error occurred while loading '{os.path.basename(file_name)}'.  Please check that it has the correct format.")
+                    return
 
             # Open the Select Curves dialog after loading all datasets
             self.open_select_curves_dialog()
@@ -360,13 +364,26 @@ class OverlaySelectCurvesDialog(QDialog):
         self.parent = parent
 
         self.grid_layout = QGridLayout()
-        self.current_row = 0
+
+        self.add_column_headers()
+
+        self.current_row = 1
 
         for dataset_name in self.datasets.keys():
             self.setup_curve_controls(dataset_name)
 
-        self.setLayout(self.grid_layout)
+        self.main_layout = QVBoxLayout()
+        self.main_layout.addLayout(self.grid_layout)
+        self.main_layout.setContentsMargins(8, 8, 8, 8)
+        self.setLayout(self.main_layout)
+
         self.update_controls()
+
+    def add_column_headers(self):
+        self.grid_layout.addWidget(QLabel(""), 0, 0)
+        self.grid_layout.addWidget(QLabel("Line\nStyle"), 0, 1)
+        self.grid_layout.addWidget(QLabel("Line\nWidth"), 0, 2)
+        self.grid_layout.addWidget(QLabel("Legend Label"), 0, 3)
 
     def setup_curve_controls(self, dataset_name):
         if dataset_name in self.plot_settings:
@@ -392,6 +409,7 @@ class OverlaySelectCurvesDialog(QDialog):
         linestyle_combo = QComboBox()
         linestyle_combo.addItems(['-', '--', '-.', ':'])
         linestyle_combo.setCurrentIndex(['-', '--', '-.', ':'].index(settings.get('linestyle', '-')))
+        linestyle_combo.setFixedWidth(50)
         linestyle_combo.currentIndexChanged.connect(lambda index: self.handle_linestyle_change(dataset_name, index))
         self.grid_layout.addWidget(linestyle_combo, self.current_row, 1)
 
@@ -400,19 +418,25 @@ class OverlaySelectCurvesDialog(QDialog):
         linewidth_box.setRange(0.5, 5.0)
         linewidth_box.setSingleStep(0.5)
         linewidth_box.setValue(settings.get('linewidth', 1.5))
+        linewidth_box.setFixedWidth(50)
         linewidth_box.valueChanged.connect(lambda value: self.handle_linewidth_change(dataset_name, value))
         self.grid_layout.addWidget(linewidth_box, self.current_row, 2)
-
-        # Add colour picker button
-        color_button = QPushButton("Colour")
-        color_button.clicked.connect(lambda: self.handle_color_change(dataset_name))
-        self.grid_layout.addWidget(color_button, self.current_row, 3)
 
         # Add label input for dataset
         ylabel_edit = QLineEdit(settings.get('label', dataset_name))
         ylabel_edit.setPlaceholderText("Legend Label")
         ylabel_edit.editingFinished.connect(lambda: self.handle_label_change(dataset_name, ylabel_edit.text()))
-        self.grid_layout.addWidget(ylabel_edit, self.current_row, 4)
+        self.grid_layout.addWidget(ylabel_edit, self.current_row, 3)
+
+        color_label = QLabel("Colour:")
+        self.grid_layout.addWidget(color_label, self.current_row, 4)
+
+        color_box = QLabel()
+        color_box.setFixedSize(20, 20)
+        current_color = settings.get('color', 'black')
+        color_box.setStyleSheet(f"background-color: {current_color}; border: 1px solid black;")
+        color_box.mousePressEvent = lambda event, name=dataset_name, box=color_box: self.handle_color_change(name, box)
+        self.grid_layout.addWidget(color_box, self.current_row, 5)
 
         self.current_row += 1
 
@@ -471,11 +495,13 @@ class OverlaySelectCurvesDialog(QDialog):
             self.plot_settings[dataset_name]['label'] = label
             self.curveOptionsChanged.emit()
 
-    def handle_color_change(self, dataset_name):
+    def handle_color_change(self, dataset_name, color_box):
         if dataset_name in self.plot_settings:
             color = QColorDialog.getColor(Qt.black, self, "Select Color for " + dataset_name)
             if color.isValid():
-                self.plot_settings[dataset_name]['color'] = color.name()
+                color_name = color.name()
+                self.plot_settings[dataset_name]['color'] = color_name
+                color_box.setStyleSheet(f"background-color: {color_name}; border: 1px solid black;")
                 self.curveOptionsChanged.emit()
 
     def clear_curve_data(self, dataset_name):
