@@ -769,7 +769,6 @@ class SelectCurvesDialog(QDialog):
                 self.curve_options[curve] = options
 
 
-
 class OptionsDialog(QDialog):
     legendToggled = pyqtSignal(bool)
     fractionLabelsToggled = pyqtSignal(bool)
