@@ -3,6 +3,7 @@ misc/
 package_for_mac.com
 package_for_windows.com
 packaging_instructions.txt
+test.com
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
