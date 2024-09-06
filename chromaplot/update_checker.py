@@ -33,7 +33,7 @@ def prompt_for_update(latest_release):
 
     reply = QMessageBox.question(
         None, "Update Available",
-        f"A new version {latest_release['tag_name']} is available. Would you like to update?",
+        f"A new version {latest_release['tag_name']} is available.  Would you like to update?",
         QMessageBox.Yes | QMessageBox.No
     )
 
