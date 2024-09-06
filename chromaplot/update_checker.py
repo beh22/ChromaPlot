@@ -11,14 +11,10 @@ import sys
 from PyQt5.QtWidgets import QMessageBox
 
 GITHUB_API_URL = "https://api.github.com/repos/beh22/ChromaPlot/releases/latest"
-GITHUB_TOKEN = "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"
 
 def check_for_updates(CURRENT_VERSION):
     try:
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}"
-        }
-        response = requests.get(GITHUB_API_URL, headers=headers)
+        response = requests.get(GITHUB_API_URL)
         response.raise_for_status()
         latest_release = response.json()
 
