@@ -25,11 +25,11 @@ To install ChromaPlot, follow these steps:
 ### For Windows:
 
 1. Download the `ChromaPlot_windows.zip` file from the latest release in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
-2. In **Downloads**, unzip the file and enter the folder created
+2. In **Downloads**, unzip the file and enter the folder created.
 3. Open the `.exe` file, run the installer and follow the on-screen instructions.
 4. If you see a warning from Windows Defender SmartScreen, follow these steps:
    - Click on "More info" in the warning dialog.
-   - Click the "Run anyway" button to proceed with the installation
+   - Click the "Run anyway" button to proceed with the installation.
 5. Once installed, you can start ChromaPlot from the Start Menu or desktop shortcut.
 
 <details>
@@ -45,15 +45,16 @@ Because ChromaPlot is not signed with a code-signing certificate from a trusted 
 
 ### For macOS:
 
-1. Download the `.dmg` file from the latest release in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
-2. Open the `.dmg` file and drag the ChromaPlot icon to your Applications folder.
-3. Attempt to open the app by double-clicking it.
-4. If you see a warning stating that the app is from an unidentified developer, follow these steps:
+1. Download the `ChromaPlot_macOS.zip` file from the latest release in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
+2. In **Downloads**, unzip the file and enter the folder created.
+3. Open the `.dmg` file and drag the ChromaPlot icon to your Applications folder.
+4. Attempt to open the app by double-clicking it.
+5. If you see a warning stating that the app is from an unidentified developer, follow these steps:
    - Go to **System Preferences** > **Security & Privacy** > **Security**.
    - Click the "Open Anyway" button near the message about ChromaPlot and type in your password.
    - Confirm that you want to open the app in the dialog box that appears.
-5. Open ChromaPlot from the Application folder or Launchpad
-   - **Note**: It may require multiple attempts to open the app until it can be used
+6. Open ChromaPlot from the Application folder or Launchpad.
+   - **Note**: It may require multiple attempts to open the app until it can be used.
 
 <details>
    <summary><b>Information for macOS Users</b></summary>
