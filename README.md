@@ -24,12 +24,12 @@ To install ChromaPlot, follow these steps:
 
 ### For Windows:
 
-1. Download the `ChromaPlot_windows.zip` file from the latest relesae in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
+1. Download the `ChromaPlot_windows.zip` file from the latest release in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
 2. In **Downloads**, unzip the file and enter the folder created
 3. Open the `.exe` file, run the installer and follow the on-screen instructions.
-4. If you see a warning from Windows Defeder SmartScreen, follow these steps:
+4. If you see a warning from Windows Defender SmartScreen, follow these steps:
    - Click on "More info" in the warning dialog.
-   - Click the "Run anyway" buton to proceed with the installation
+   - Click the "Run anyway" button to proceed with the installation
 5. Once installed, you can start ChromaPlot from the Start Menu or desktop shortcut.
 
 <details>
@@ -60,15 +60,15 @@ Because ChromaPlot is not signed with a code-signing certificate from a trusted 
 
 Since ChromaPlot is not signed with an Apple-issued certificate, you may encounter a warning when attempting to open the application. This is because Apple cannot verify that the app is from a trusted developer.
 
-**Disclaimer**: We have ensured that ChromaPlot is safe, though it has not been officially notarized by Apple. You can review the source code in this repository or run the app from the source code.
+**Disclaimer**: We have taken steps to ensure that ChromaPlot is safe and secure, though it has not been officially notarized by Apple. You can review the source code in this repository or run the app from the source code.
 
 **Why This Happens**: Apple's Gatekeeper security system prevents apps from unidentified developers from running by default. Notarizing an app requires a paid Apple Developer account, which is not feasible for all open-source projects.
 
 </details>
 
-### From Source:
+### From Source Code:
 
-If prefered, you can run ChromaPlot from the source code. This requires a [Python installation](https://www.python.org/downloads/) on your system. Run the following commands in a termainal:
+If preferred, you can run ChromaPlot from the source code. This requires a [Python installation](https://www.python.org/downloads/) on your system. Run the following commands in a terminal:
 
 1. Clone this repository:
    ```bash
@@ -78,7 +78,7 @@ If prefered, you can run ChromaPlot from the source code. This requires a [Pytho
    ```bash
    cd ChromaPlot
    ```
-3. Install the required dependencies:
+3. Install the required dependencies (ensure you have Python 3.7+ installed):
    ```bash
    pip install -r requirements.txt
    ```
@@ -142,7 +142,7 @@ For more information on licensing and usage, please [contact us](#support--conta
 
 ### 1. **Reporting Issues**
 
-- If you encounter and bugs, issues, or have feature requests, please report them on the [GitHub Issues](https://github.com/beh22/ChromaPlot/issues) page. Make sure to provide as much detail as possible, including:
+- If you encounter any bugs, issues, or have feature requests, please report them on the [GitHub Issues](https://github.com/beh22/ChromaPlot/issues) page. Make sure to provide as much detail as possible, including:
   - Steps to reproduce the issue
   - Screenshots, if applicable
   - The version of ChromaPlot you are using
