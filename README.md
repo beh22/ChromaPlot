@@ -12,36 +12,34 @@ A guide on how to use the features of ChromaPlot is provided within the app, how
 
 ## Installation
 
-ChromaPlot is not officially code-signed by either Windows or Apple, so running from the source code is currently the preferred option. However, pre-packaged installations are provided for both operating systems for ease of use, allowing you to run the software without needing to install Python and the necessary dependencies on your system.
+ChromaPlot is not officially code-signed by either Windows or Apple, so running from the source code is currently the preferred option.
 
-**Please note:** To properly install in this manner requires extra steps to bypass in-built security. This is explained further in the relevant sections below.
+However, pre-packaged installations are provided for both operating systems for ease of use, allowing you to run the software without needing to install Python and the necessary dependencies on your system.
+
+**Please note:** Installing the pre-packaged versions requires a few extra steps to bypass built-in security warnings from Windows and macOS. These steps are explained below.
+
+If you have any questions or encounter issues, please [contact us](#support--contact-information).
 
 To install ChromaPlot, follow these steps:
 
 ### For Windows:
 
-1. Download the `.exe` file from the latest release in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
-2. Open the `.exe` file, run the installer and follow the on-screen instructions.
-3. Once installed, you can start ChromaPlot from the Start Menu or desktop shortcut.
+1. Download the `ChromaPlot_windows.zip` file from the latest relesae in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
+2. In **Downloads**, unzip the file and enter the folder created
+3. Open the `.exe` file, run the installer and follow the on-screen instructions.
+4. If you see a warning from Windows Defeder SmartScreen, follow these steps:
+   - Click on "More info" in the warning dialog.
+   - Click the "Run anyway" buton to proceed with the installation
+5. Once installed, you can start ChromaPlot from the Start Menu or desktop shortcut.
 
 <details>
-   <summary><b>Important Information for Windows Users</b></summary>
+   <summary><b>Information for Windows Users</b></summary>
 
 Because ChromaPlot is not signed with a code-signing certificate from a trusted Certificate Authority, you may encounter a Windows Defender SmartScreen warning when you try to run the application.
 
-**To Open ChromaPlot on Windows:**
+**Disclaimer**: We have taken steps to ensure that ChromaPlot is safe and secure. The app is not signed with a code-signing certificate, but you can inspect the source code in this repository or run it directly from the source if you prefer.
 
-1. Download the installer or executable file from the repository.
-2. Double-click the file to start the installation.
-3. If you see a warning from Windows Defender SmartScreen, follow these steps:
-   - Click on "More info" in the warning dialog.
-   - Click the "Run anyway" button to proceed with the installation or to run the application.
-
-**Disclaimer**: While we have taken steps to ensure that ChromaPlot is safe and secure, the app is not signed with a code-signing certificate. If you have any concerns about security, feel free to review the source code available in this repository or run from the source code as described below.
-
-**Why This Happens**: Windows Defender SmartScreen is designed to protect users from potentially harmful software by warning them when running apps from unknown publishers. Obtaining a code-signing certificate to bypass this warning can be costly, which is why it hasn't been implemented for this project.
-
-If you have any questions or encouter issues, please [contact us](#support--contact-information).
+**Why This Happens**: Windows Defender SmartScreen warns users when apps from unknown publishers are run. Code-signing certificates bypass this warning but obtaining one can be costly for open-source projects like ChromaPlot.
 
 </details>
 
@@ -49,29 +47,22 @@ If you have any questions or encouter issues, please [contact us](#support--cont
 
 1. Download the `.dmg` file from the latest release in the [releases](https://github.com/beh22/ChromaPlot/releases) section.
 2. Open the `.dmg` file and drag the ChromaPlot icon to your Applications folder.
-3. Open ChromaPlot from the Applications folder or Launchpad.
-
-<details>
-   <summary><b>Important Information for macOS Users</b></summary>
-
-Since ChromaPlot is not signed with an Apple-issued certificate, you may encounter a warning when attempting to open the application. This is because Apple cannot verify that the app is from a trusted developer.
-
-**To Open ChromaPlot on macOS:**
-
-1. After downloading the `.dmg` file, double-click it to open.
-2. Drag the ChromaPlot app to your Applications folder.
 3. Attempt to open the app by double-clicking it.
 4. If you see a warning stating that the app is from an unidentified developer, follow these steps:
    - Go to **System Preferences** > **Security & Privacy** > **Security**.
    - Click the "Open Anyway" button near the message about ChromaPlot and type in your password.
    - Confirm that you want to open the app in the dialog box that appears.
-5. Once installed, ChromaPlot may require multiple attempts to open until it can be used
+5. Open ChromaPlot from the Application folder or Launchpad
+   - **Note**: It may require multiple attempts to open the app until it can be used
 
-**Disclaimer**: While we have taken steps to ensure that ChromaPlot is safe and secure, the app has not been officially notarized by Apple. If you have any concerns about security, feel free to review the source code available in this repository or run from the source code as described below.
+<details>
+   <summary><b>Information for macOS Users</b></summary>
 
-**Why This Happens**: Apple's security system, Gatekeeper, protects users by ensuring that only apps from identified developers are installed without extra steps. To become an identified developer, a paid Apple Developer account is required, which is not feasible for every open-source project.
+Since ChromaPlot is not signed with an Apple-issued certificate, you may encounter a warning when attempting to open the application. This is because Apple cannot verify that the app is from a trusted developer.
 
-If you have any questions or encouter issues, please [contact us](#support--contact-information).
+**Disclaimer**: We have ensured that ChromaPlot is safe, though it has not been officially notarized by Apple. You can review the source code in this repository or run the app from the source code.
+
+**Why This Happens**: Apple's Gatekeeper security system prevents apps from unidentified developers from running by default. Notarizing an app requires a paid Apple Developer account, which is not feasible for all open-source projects.
 
 </details>
 
