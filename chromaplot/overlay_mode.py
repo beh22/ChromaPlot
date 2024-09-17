@@ -1,5 +1,5 @@
 '''
-ChromaPlot Version 0.1.0
+ChromaPlot Version 0.1.1
 Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
@@ -331,10 +331,15 @@ class OverlayMode(QDialog):
             if not file_name.lower().endswith(extension):
                 file_name += extension
 
-            # Save the figure using the determined file name and extension
-            self.figure.savefig(file_name)
-
-            QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
+            try:
+                self.figure.savefig(file_name)
+                QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
+            except PermissionError:
+                QMessageBox.critical(self, "Save Error", f"Permission denied: Cannot save the file '{file_name}'.")
+            except IOError as e:
+                QMessageBox.critical(self, "Save Error", f"An error occurred while saving the file '{file_name}': {str(e)}.")
+            except Exception as e:
+                QMessageBox.critical(self, "Save Error", f"An unexpected error occurred: {str(e)}.")
 
     def close_dialog(self):
         if self.select_curves_dialog:

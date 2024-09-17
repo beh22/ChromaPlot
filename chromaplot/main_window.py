@@ -1,5 +1,5 @@
 '''
-ChromaPlot Version 0.1.0
+ChromaPlot Version 0.1.1
 Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
