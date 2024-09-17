@@ -6,6 +6,7 @@ packaging_instructions.txt
 test.com
 ChromaPlot.exe
 chromaplot.ifp
+ChromaPlot_windows.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
