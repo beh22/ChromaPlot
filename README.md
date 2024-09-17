@@ -54,7 +54,7 @@ Because ChromaPlot is not signed with a code-signing certificate from a trusted 
    - Click the "Open Anyway" button near the message about ChromaPlot and type in your password.
    - Confirm that you want to open the app in the dialog box that appears.
 6. Open ChromaPlot from the Application folder or Launchpad.
-   - **Note**: It may require multiple attempts to open the app until it can be used.
+   - **Note**: To keep the filesize small, it may require take up to a minute and multiple attempts for ChromaPlot to open.
 
 <details>
    <summary><b>Information for macOS Users</b></summary>
