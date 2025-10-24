@@ -10,6 +10,8 @@ from PyQt5.QtCore import Qt
 import sys
 import os
 
+from pathlib import Path
+
 from chromaplot.single_mode import SingleMode
 from chromaplot.overlay_mode import OverlayMode
 
@@ -114,10 +116,10 @@ class MainWindow(QMainWindow):
         self.single_mode_button.clicked.connect(self.single_mode)
         self.overlay_mode_button.clicked.connect(self.overlay_mode)
 
-    def resource_path(self, relative_path):
+    def resource_path(self, filename):
         if hasattr(sys, '_MEIPASS'):
-            return os.path.join(sys._MEIPASS, relative_path)
-        return os.path.join(os.path.abspath("./chromaplot/resources/"), relative_path)
+            return str(Path(sys._MEIPASS) / filename)
+        return str((Path(__file__).resolve().parent / "resources" / filename))
 
     def single_mode(self):
         self.single_mode_dialog = SingleMode("Single Mode", self)
