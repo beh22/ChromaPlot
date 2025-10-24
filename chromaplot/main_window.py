@@ -142,7 +142,7 @@ class AboutDialog(QDialog):
         layout = QVBoxLayout()
 
         about_text = QLabel(
-            "ChromaPlot Version 0.1.0\n\n"
+            "ChromaPlot Version 0.1.1\n\n"
             "Authors: Billy Hobbs and Felipe Ossa\n"
             "© 2024 Billy Hobbs.  All rights reserved.\n\n"
             "ChromaPlot is a tool for creating high-quality chromatogram figures.\n\n"

@@ -22,6 +22,10 @@ import os
 from chromaplot.AKdatafile import AKdatafile
 from chromaplot.help_dialogs import MainHelpDialog
 
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['font.sans-serif'] = "Helvetica"
+plt.rcParams['font.family'] = "sans-serif"
 
 class SingleMode(QDialog):
     def __init__(self, mode_name, parent=None):
@@ -193,13 +197,35 @@ class SingleMode(QDialog):
 
         # Plot UV curve separately with its own customization options
         # if 'UV' in self.data:
-        keys = [x for x in self.data.keys()]
+
+        uv_key = None
+        for possible_key in ['UV', 'UV 1_280']:
+            if possible_key in self.data:
+                uv_key = possible_key
+                break
+
+        if uv_key is None:
+            print("No UV data found.")
+            return
+        
         uv_options = self.selected_curves.get('UV', {
             'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'Absorbance (mAU)', 'label': 'UV'
         })
-        curvekeys = list(self.data[keys[0]].keys())
-        x = np.array(self.data[keys[0]][curvekeys[0]])
-        y = np.array(self.data[keys[0]][curvekeys[1]])
+        curvekeys = list(self.data[uv_key].keys())
+        if len(curvekeys) < 2:
+            print(f"Not enough keys in UV data: {curvekeys}")
+            return
+        
+        x = np.array(self.data[uv_key][curvekeys[0]])
+        y = np.array(self.data[uv_key][curvekeys[1]])
+
+        # keys = [x for x in self.data.keys()]
+        # uv_options = self.selected_curves.get('UV', {
+        #     'linestyle': '-', 'linewidth': 1.5, 'color': 'black', 'ylabel': 'Absorbance (mAU)', 'label': 'UV'
+        # })
+        # curvekeys = list(self.data[keys[0]].keys())
+        # x = np.array(self.data[keys[0]][curvekeys[0]])
+        # y = np.array(self.data[keys[0]][curvekeys[1]])
         
         uv_line, = ax.plot(x, y, label=uv_options['label'], color=uv_options['color'], linestyle=uv_options['linestyle'], linewidth=uv_options['linewidth'])
         ax.set_xlim(left=0, right=max(x))
@@ -388,7 +414,7 @@ class SingleMode(QDialog):
                 file_name += extension
 
             try:
-                self.figure.savefig(file_name)
+                self.figure.savefig(file_name, transparent=True)
                 QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
             except PermissionError:
                 QMessageBox.critical(self, "Save Error", f"Permission denied: Cannot save the file '{file_name}'.")

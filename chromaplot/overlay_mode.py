@@ -22,6 +22,10 @@ import os
 from chromaplot.AKdatafile import AKdatafile
 from chromaplot.help_dialogs import MainHelpDialog
 
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+plt.rcParams['font.sans-serif'] = "Helvetica"
+plt.rcParams['font.family'] = "sans-serif"
 
 class OverlayMode(QDialog):
     def __init__(self, parent=None):
@@ -213,9 +217,23 @@ class OverlayMode(QDialog):
         for dataset_name, settings in self.plot_settings.items():
             if dataset_name in self.loaded_datasets:
                 data = self.loaded_datasets[dataset_name]
-                curvekeys = list(data['UV'].keys())
-                x = np.array(data['UV'][curvekeys[0]])
-                y = np.array(data['UV'][curvekeys[1]])
+                uv_key = None
+                for key in ['UV', 'UV 1_280']:
+                    if key in data:
+                        uv_key = key
+                        break
+
+                if uv_key is None:
+                    print(f"Warning: No UV data found for dataset '{dataset_name}'")
+                    continue
+
+                curvekeys = list(data[uv_key].keys())
+                if len(curvekeys) < 2:
+                    print(f"Warning: Not enough curves in UV data for '{dataset_name}'")
+                    continue
+
+                x = np.array(data[uv_key][curvekeys[0]])
+                y = np.array(data[uv_key][curvekeys[1]])
 
                 line, = ax.plot(
                     x, y, label=settings['label'],
@@ -332,7 +350,7 @@ class OverlayMode(QDialog):
                 file_name += extension
 
             try:
-                self.figure.savefig(file_name)
+                self.figure.savefig(file_name, transparent=True)
                 QMessageBox.information(self, "Save Plot", "Plot saved successfully!")
             except PermissionError:
                 QMessageBox.critical(self, "Save Error", f"Permission denied: Cannot save the file '{file_name}'.")

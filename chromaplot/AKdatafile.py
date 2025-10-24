@@ -4,6 +4,9 @@ Authors: Billy Hobbs and Felipe Ossa
 © 2024 Billy Hobbs. All rights reserved.
 '''
 
+import csv
+from io import StringIO
+
 class AKdatafile:
     def __init__ (self, datafilename):
         self.datafilename = datafilename
@@ -20,11 +23,14 @@ class AKdatafile:
             with open(datafilename, 'r', encoding='UTF-16') as d:
                 self.datalines = d.readlines()
 
-    '''Base function, splits each line by tab delimiters and removes \n 
+    '''Base function, splits each line by tab (or comma) delimiters and removes \n 
     characters, generates a list word which is used by other functions to parse
     the data file'''
     def readline (self, inline): 
-        word = inline.split('\t')
+        word = inline.split('\t') # tries tsv first, if not, tries csv
+        if len(word) <= 1:
+            reader = csv.reader(StringIO(inline))
+            word = next(reader)
         colno = len(word)
         colnoerror = False
         if colno % 2 != 0:
