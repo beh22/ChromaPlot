@@ -150,7 +150,8 @@ class SingleMode(QDialog):
             try:
                 print(f"File loaded: {file_name}")
                 self.loaded_file = file_name
-                self.data = AKdatafile(file_name).genAKdict(1, 2)
+                # self.data = AKdatafile(file_name).genAKdict(1, 2)
+                self.data = AKdatafile(file_name).genAKdict()
 
                 # Reopen the SelectCurvesDialog with the new data
                 self.open_select_curves_dialog()
@@ -158,7 +159,13 @@ class SingleMode(QDialog):
                 # Update the plot with the new data
                 self.update_plot()
             except Exception as e:
-                QMessageBox.critical(self, "Error Loading Data", f"An error occurred while loading '{os.path.basename(file_name)}'.  Please check that it has the correct format.")
+                import traceback; traceback.print_exc()
+                QMessageBox.critical(
+                    self, "Error Loading Data",
+                    f"Failed to load '{os.path.basename(file_name)}': {e}"
+                )
+            # except Exception as e:
+                # QMessageBox.critical(self, "Error Loading Data", f"An error occurred while loading '{os.path.basename(file_name)}'.  Please check that it has the correct format.")
 
     def open_select_curves_dialog(self):
         if not self.is_data_loaded():
