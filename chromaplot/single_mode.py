@@ -367,8 +367,28 @@ class SingleMode(QDialog):
         for i in range(len(flab) - 1):
             flabx.append((f[i] + f[i+1]) / 2)
 
+        def _clean_fraction_label(x):
+            if x is None:
+                return ""
+            try:
+                if x != x:
+                    return ""
+            except Exception:
+                pass
+            
+            if isinstance(x, (int, float)):
+                if float(x).is_integer():
+                    return str(int(x))
+                return str(x)
+
+            s = str(x).strip()
+            s = s.strip('T"')
+            return s
+
         if stript:
-            flab = [x.strip("T\"") for x in flab]
+            flab = [_clean_fraction_label(x) for x in flab]
+        else:
+            flab = [str(x) for x in flab]
 
         x_min, x_max = self.ax1.get_xlim()
         y_min, y_max = self.ax1.get_ylim()
@@ -507,33 +527,59 @@ class SingleMode(QDialog):
 
         if mode == 'Fractions':
             try:
-                # Retrieve fraction data
-                fractions = self.data['Fraction']['Fraction']
+                frac_raw = self.data['Fraction']['Fraction']
                 volumes = self.data['Fraction']['ml']
             except KeyError:
                 QMessageBox.warning(self, "Error", "Fraction data does not seem to be present.")
                 return
-
-            # Clean and convert fraction numbers to integers
-            fractions = [int(x.strip("T\"")) for x in fractions if x.strip("T\"").isdigit()]
-
-            # Check if specified fractions exist in the data
-            if int(start_value) not in fractions or int(stop_value) not in fractions:
+            
+            def _to_fraction_int(x):
+                """Return int fraction number if x looks like a fraction label; otherwise None."""
+                if x is None:
+                    return None
+                try:
+                    if x != x:
+                        return None
+                except Exception:
+                    pass
+                
+                if isinstance(x, (int, float)):
+                    if float(x).is_integer():
+                        return int(x)
+                    return None
+            
+                s = str(x).strip().strip('T"')
+                return int(s) if s.isdigit() else None
+            
+            # Build a list of (fraction_number, volume, original_index) for valid fraction entries
+            valid = []
+            for idx, (fr, vol) in enumerate(zip(frac_raw, volumes)):
+                n = _to_fraction_int(fr)
+                if n is not None:
+                    valid.append((n, vol, idx))
+            
+            # Map fraction number -> position in 'valid' list
+            frac_nums = [t[0] for t in valid]
+            
+            # Check if specified fractions exist
+            start_n = int(start_value)
+            stop_n = int(stop_value)
+            
+            if start_n not in frac_nums or stop_n not in frac_nums:
                 QMessageBox.warning(self, "Error", "Specified fractions are not in the data.")
                 return
-
-            # Get the corresponding volume ranges
-            start_index = fractions.index(int(start_value))
-            stop_index = fractions.index(int(stop_value))
-
-            start_vol = volumes[start_index]
-
-            if stop_index + 1 < len(volumes):
-                stop_vol = volumes[stop_index + 1]
+            
+            start_pos = frac_nums.index(start_n)
+            stop_pos = frac_nums.index(stop_n)
+            
+            start_vol = valid[start_pos][1]
+            
+            # stop volume: use the next valid fraction's volume boundary if possible
+            if stop_pos + 1 < len(valid):
+                stop_vol = valid[stop_pos + 1][1]
             else:
-                stop_vol = volumes[stop_index]
-
-            # Store the actual volumes for shading
+                stop_vol = valid[stop_pos][1]
+            
             self.shaded_regions.append((start_vol, stop_vol, color, alpha))
         else:
             self.shaded_regions.append((start_value, stop_value, color, alpha))

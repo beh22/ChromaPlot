@@ -8,6 +8,7 @@ ChromaPlot.exe
 chromaplot.ifp
 ChromaPlot_windows.zip
 .DS_Store
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
