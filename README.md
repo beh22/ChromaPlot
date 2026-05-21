@@ -12,7 +12,7 @@
 >
 > ChromaPlot v2 is under active development and will receive all future updates.
 >
-> Some features from v1 (including fraction shading, vertical marker, and packaged app releases) are not yet available, but will be added soon.
+> Some features from v1 (including fraction shading, vertical marker, secondary axes and packaged app releases) are not yet available, but will be added soon.
 >
 > **Find ChromaPlot v2 here:**  
 > https://github.com/beh22/ChromaPlot_v2
