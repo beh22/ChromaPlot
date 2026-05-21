@@ -1,5 +1,24 @@
 # <img src="chromaplot/resources/cp_logo.png" alt="ChromaPlot logo" width="300" />
 
+> [!IMPORTANT]
+> ## ChromaPlot Version 2 is now available!
+>
+> ChromaPlot has been completely rewritten as **ChromaPlot v2**, featuring:
+>
+> - Project-based workflows
+> - Improved multi-dataset overlays
+> - A redesigned interface
+> - Better export handling
+>
+> ChromaPlot v2 is under active development and will receive all future updates.
+>
+> Some features from v1 (including fraction shading, vertical marker, and packaged app releases) are not yet available, but will be added soon.
+>
+> **Find ChromaPlot v2 here:**  
+> https://github.com/beh22/ChromaPlot_v2
+
+---
+
 **ChromaPlot** is a Python desktop application designed for creating high-quality figures of chromatogram data from Cytiva ÄKTA systems. It provides an easy-to-use interface for visualising and analysing your chromatographic data.
 
 ## Features
